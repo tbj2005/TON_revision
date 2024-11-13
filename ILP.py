@@ -110,7 +110,7 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
          range(0, ts_num)), name="")
 
     model.addConstrs(
-        (b_out[u] >= quicksum((1 - k_ju[j, u]) * sum([w_uj[v][j] for v in range(0, rack_num)]) * c_jt[j, t] for j in
+        (b_out[u] >= quicksum((1 - k_ju[j, u]) * ps_uj[u][j] * sum([w_uj[v][j] for v in range(0, rack_num)]) * c_jt[j, t] for j in
                               range(0, job_num)) for u in range(0, rack_num) for t in range(0, ts_num)), name="")
 
     model.addConstrs((p_uvt[u, v, t] == p_uvt[v, u, t] for t in range(0, ts_num) for u in range(0, rack_num) for v in
@@ -204,7 +204,7 @@ with open("PS_time.txt", "r") as file:
         PS = float(columns[0])
         PS_time.append(PS)
 
-job_number = 20
+job_number = 10
 rack_number = 4
 oxc_per_rack = 12
 ts_number = 40
