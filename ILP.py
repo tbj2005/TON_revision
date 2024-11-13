@@ -101,9 +101,10 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
                                   range(0, ts_num)), name="")
                 model.addConstrs((d_uvjt[u, v, j, 0] == fn_uvj[u, v, j] * d_job[j] for j in range(0, job_num)), name="")
             if u == v:
-                model.addConstrs((b_uvjt[u, u, j, t] == w_uj[u][j] * c_jt[j, t] * ps_uj[u][j] for j in range(0, job_num) for t in
-                                  range(0, ts_num)), name="")
-                model.addConstrs((d_uvjt[u, u, j, 0] == w_uj[u][j] * d_job[j] * ps_uj[u][j] for j in range(0, job_num)), name="")
+                model.addConstrs((b_uvjt[u, u, j, t] == w_uj[u][j] * c_jt[j, t] * ps_uj[u][j] for j in range(0, job_num)
+                                  for t in range(0, ts_num)), name="")
+                model.addConstrs((d_uvjt[u, u, j, 0] == w_uj[u][j] * d_job[j] * ps_uj[u][j] for j in range(0, job_num)),
+                                 name="")
 
     model.addConstrs(
         (b_in[u] >= quicksum(w_uj[u][j] * c_jt[j, t] for j in range(0, job_num)) for u in range(0, rack_num) for t in
