@@ -33,18 +33,20 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
     f_st = model.addVars(len(ts_set), ts_num, vtype=GRB.BINARY, name="f_st")
     k_ju = model.addVars(job_num, rack_num, vtype=GRB.BINARY, name="k_jv")
     k_j = model.addVars(job_num, vtype=GRB.BINARY, name="k_j")
-    x_jt = model.addVars(job_num, ts_num, vtype=GRB.BINARY, name="x_jv")
+    x_jt = model.addVars(job_num, ts_num, vtype=GRB.BINARY, name="x_jt")
     l_uj = model.addVars(rack_num, job_num, vtype=GRB.BINARY, name="l_vj")
     c_jt = model.addVars(job_num, ts_num, vtype=GRB.CONTINUOUS, name="c_ji")
     b_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.CONTINUOUS, name="b_uvji")
     d_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.CONTINUOUS, name="d_uvjt")
     p_uvt = model.addVars(rack_num, rack_num, ts_num, vtype=GRB.INTEGER, name="p_uvt")
     r_uvt = model.addVars(rack_num, rack_num, ts_num, vtype=GRB.BINARY, name="r_uvt")
+    r_t = model.addVars(ts_num, vtype=GRB.BINARY, name="r_t")
     delta_b_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.CONTINUOUS, name="delta_b_uvjt")
     u_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.BINARY, name="u_uvjt")
     fn_uj = model.addVars(rack_num, job_num, vtype=GRB.INTEGER, name="flow_uj")
     fn_uvj = model.addVars(rack_num, rack_num, job_num, vtype=GRB.INTEGER, name="fn_uvj")
     ub_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.CONTINUOUS, name="ub_uvjt")
+    e_jt = model.addVars(job_num, ts_num, vtype=GRB.BINARY, name="e_jt")
 
     w_uj = np.zeros([rack_num, job_num])
     ps_uj = np.zeros([rack_num, job_num])
@@ -58,13 +60,13 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
             else:
                 ps_uj[u][j] = 0
 
+    print(w_uj, ps_uj)
     model.addConstrs(
         (x_jt[j, t] == quicksum(z_js[j, s] * f_st[s, t] for s in range(0, len(ts_set))) for j in range(0, job_num) for t
          in range(0, ts_num)), name="")
 
-    model.addConstrs(
-        (t_j[j] >= t * x_jt[j, t] + agg_time[j] * (1 - k_j[j]) for j in range(0, job_num) for t in range(0, ts_num)),
-        name="")
+    model.addConstrs((t_j[j] >= (t + 1) * x_jt[j, t] + agg_time[j] * (1 - k_j[j]) for j in range(0, job_num) for t in
+                      range(0, ts_num)), name="")
     model.addConstrs((t_all >= t_j[j] for j in range(0, job_num)), name="")
 
     model.addConstrs((k_j[j] >= m * quicksum(k_ju[j, u] for u in range(0, rack_num)) for j in range(0, job_num)),
@@ -89,10 +91,11 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
                       range(0, job_num)), name="")
     for u in range(0, rack_num):
         for v in range(0, rack_num):
-            if u != u:
+            if u != v:
                 model.addConstrs((fn_uvj[u, v, j] == fn_uj[u, j] * ps_uj[v][j] for j in range(0, job_num)), name="")
             else:
-                model.addConstrs((fn_uvj[u, u, j] == 0 for j in range(0, job_num)), name="")
+                model.addConstrs((fn_uvj[u, u, j] == w_uj[u][j] * (ps_uj[u][j] * (1 - k_ju[j, u]) + k_ju[j, u]) for j in
+                                  range(0, job_num)), name="")
 
     for u in range(0, rack_num):
         for v in range(0, rack_num):
@@ -101,10 +104,9 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
                                   range(0, ts_num)), name="")
                 model.addConstrs((d_uvjt[u, v, j, 0] == fn_uvj[u, v, j] * d_job[j] for j in range(0, job_num)), name="")
             if u == v:
-                model.addConstrs((b_uvjt[u, u, j, t] == w_uj[u][j] * c_jt[j, t] * ps_uj[u][j] for j in range(0, job_num)
+                model.addConstrs((b_uvjt[u, u, j, t] == fn_uvj[u, u, j] * c_jt[j, t] for j in range(0, job_num)
                                   for t in range(0, ts_num)), name="")
-                model.addConstrs((d_uvjt[u, u, j, 0] == w_uj[u][j] * d_job[j] * ps_uj[u][j] for j in range(0, job_num)),
-                                 name="")
+                model.addConstrs((d_uvjt[u, u, j, 0] == fn_uvj[u, u, j] * d_job[j] for j in range(0, job_num)), name="")
 
     model.addConstrs(
         (b_in[u] >= quicksum(w_uj[u][j] * c_jt[j, t] for j in range(0, job_num)) for u in range(0, rack_num) for t in
@@ -138,8 +140,11 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
             else:
                 model.addConstr(r_uvt[u, v, 0] * (p_uvt[u, v, 0] - 1) >= 0, name="")
                 model.addConstr(r_uvt[u, v, 0] * M >= p_uvt[u, v, 0], name="")
-                model.addConstrs((r_uvt[u, v, t] * (p_uvt[u, v, t] - 1) >= 0 for t in range(1, ts_num)), name="")
-                model.addConstrs((r_uvt[u, v, t] * M >= p_uvt[u, v, t] for t in range(1, ts_num)), name="")
+                model.addConstrs(
+                    (r_uvt[u, v, t] * (p_uvt[u, v, t] - p_uvt[u, v, t - 1] - 1) >= 0 for t in range(1, ts_num)),
+                    name="")
+                model.addConstrs((r_uvt[u, v, t] * M >= p_uvt[u, v, t] - p_uvt[u, v, t - 1] for t in range(1, ts_num)),
+                                 name="")
 
     for u in range(0, rack_num):
         for v in range(0, rack_num):
@@ -163,25 +168,48 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
     for u in range(0, rack_num):
         for v in range(0, rack_num):
             for j in range(0, job_num):
+                # model.addConstrs((d_uvjt[u, j, j, t] >= m * b_uvjt[u, v, j, t] for t in range(0, ts_num)), name="")
                 model.addConstrs((d_uvjt[u, v, j, t] >= 0 for t in range(0, ts_num)), name="")
                 model.addConstrs((d_uvjt[u, v, j, t] >= d_uvjt[u, v, j, t - 1] - x_jt[j, t - 1] * b_uvjt[
                     u, v, j, t - 1] * ts_len + ub_uvjt[u, v, j, t - 1] * r_uvt[u, v, t - 1] * t_recon for t in
                                   range(1, ts_num)), name="")
+                model.addConstrs((d_uvjt[u, v, j, t] <= d_uvjt[u, v, j, t - 1] for t in range(1, ts_num)), name="")
 
     model.addConstrs((d_uvjt[u, v, j, ts_num - 1] == 0 for u in range(0, rack_num) for v in range(0, rack_num) for j in
                       range(0, job_num)), name="")
 
-    model.setObjective(t_all, GRB.MINIMIZE)
+    for t in range(0, ts_num):
+        model.addConstr(r_t[t] <= quicksum(r_uvt[u, v, t] for u in range(0, rack_num) for v in range(0, rack_num)),
+                        name="")
+        model.addConstr(r_t[t] >= m * quicksum(r_uvt[u, v, t] for u in range(0, rack_num) for v in range(0, rack_num)),
+                        name="")
+
+    model.setObjective(t_all + m * quicksum(r_t[t] for t in range(0, ts_num)), GRB.MINIMIZE)
 
     model.setParam("OutputFlag", 1)
     model.Params.LogToConsole = True
 
     model.optimize()
 
+    count_recon = 0
+
     for v in model.getVars():
         (name, data) = (v.varName, v.x)
         if name[:5] == "t_all":
             print(name, data)
+        if name[:3] == "r_t":
+            if data == 1:
+                count_recon += 1
+        # if name[:5] == "p_uvt":
+        #     print(name, data)
+        # if name[:4] == "x_jt":
+        #     print(name, data)
+        # if name[:3] == "k_j":
+        #     print(name, data)
+        # if name[:6] == "fn_uvj":
+        #     print(name, data)
+
+    print(count_recon)
 
 
 worker_job = []
@@ -206,10 +234,10 @@ with open("PS_time.txt", "r") as file:
         PS = float(columns[0])
         PS_time.append(PS)
 
-job_number = 10
+job_number = 20
 rack_number = 4
 oxc_per_rack = 12
-ts_number = 40
+ts_number = 20
 ts_length = 2
 inc_lim = [2 for i in range(0, rack_number)]
 b_in_rack = [40 * 12 for i in range(0, rack_number)]
