@@ -291,13 +291,17 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
                     begin[relate_job[max_index]] = 1
                 else:
                     break
-    b_inter_new = np.zeros([rack_num, rack_num])
-    for i in range(0, rack_num):
-        for j in range(0, rack_num):
-            if i != j:
-                b_inter_new[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
-                                         b_per_worker[j] for k in range(0, len(d_matrix))])
-    return b_per_worker, begin, b_inter_new
+
+        b_inter_new = np.zeros([rack_num, rack_num])
+        for i in range(0, rack_num):
+            for j in range(0, rack_num):
+                if i != j:
+                    b_inter_new[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
+                                             b_per_worker[j] for k in range(0, len(d_matrix))])
+        return b_per_worker, begin, b_inter_new
+    if algo == 0:
+        for i in rack_num(0, len(d_matrix)):
+            if
 
 
 def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worker, inc_usage, local_solution, begin, end):
@@ -318,14 +322,19 @@ def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worke
     return recon_bandwidth
 
 
-def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solution):
+def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solution, rack_num, t_recon):
     for i in range(0, len(d_matrix)):
         if b_per_worker[i] > 0:
-            for u in range(0, )
+            for u in range(0, rack_num):
+                for v in range(0, rack_num):
+                    data_tran = min(b_per_worker[i] * (local_solution[i][u][v] * (1 - inc_usage[u][i]) +
+                                    inc_usage[u][i]) - recon_bandwidth[i] * t_recon, d_matrix[i][u][v])
+                    d_matrix[i][u][v] -= data_tran
+    return d_matrix
 
 
 def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_num, job_agg, d_per_worker, algo, ts_len,
-             inc_limit, b_tor, b_oxc_port, port_per_rack, b_unit):
+             inc_limit, b_tor, b_oxc_port, port_per_rack, b_unit, t_recon):
     job_list = []
     ts_count = 0
     local_solution = []
@@ -422,7 +431,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
                         local_solution, begin, end)
 
         # 更新剩余数据量
-        communication()
+        d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon)
 
 
 arrive_time = []
