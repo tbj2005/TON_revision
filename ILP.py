@@ -113,9 +113,8 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
          range(0, ts_num)), name="")
 
     model.addConstrs(
-        (b_out[u] >= quicksum(
-            (1 - k_ju[j, u]) * ps_uj[u][j] * sum([w_uj[v][j] for v in range(0, rack_num)]) * c_jt[j, t] for j in
-            range(0, job_num)) for u in range(0, rack_num) for t in range(0, ts_num)), name="")
+        (b_out[u] >= quicksum((1 - k_ju[j, u]) * quicksum(b_uvjt[v, u, j, t] for v in range(0, rack_num)) for j in
+         range(0, job_num)) for u in range(0, rack_num) for t in range(0, ts_num)), name="")
 
     model.addConstrs((p_uvt[u, v, t] == p_uvt[v, u, t] for t in range(0, ts_num) for u in range(0, rack_num) for v in
                       range(0, rack_num)), name="")
@@ -234,12 +233,12 @@ with open("PS_time.txt", "r") as file:
         PS = float(columns[0])
         PS_time.append(PS)
 
-job_number = 20
+job_number = 5
 rack_number = 4
 oxc_per_rack = 12
 ts_number = 20
-ts_length = 2
-inc_lim = [2 for i in range(0, rack_number)]
+ts_length = 1
+inc_lim = [1 for i in range(0, rack_number)]
 b_in_rack = [40 * 12 for i in range(0, rack_number)]
 b_out_rack = [40 * 12 for i in range(0, rack_number)]
 oxc_port = [12 for i in range(0, rack_number)]
