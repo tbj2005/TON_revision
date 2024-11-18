@@ -16,7 +16,7 @@ def job_exit(rack_num, local_solution, reserve_server, add_end, inc_usage, inc_r
     return reserve_server, inc_reserve
 
 
-def job_deploy(local_solution, reserve_server, new_job, job_worker_num, data_matrix, data_per_worker):
+def job_deploy(local_solution, reserve_server, new_job, job_worker_num):
     for i in new_job:
         if job_worker_num[i] + 1 <= np.sum(reserve_server):
             ps_local = np.argmax(reserve_server)
@@ -28,10 +28,9 @@ def job_deploy(local_solution, reserve_server, new_job, job_worker_num, data_mat
                 worker_count -= worker_index
                 local_solution[i][index][ps_local] += worker_index
                 reserve_server[index] -= worker_index
-                data_matrix[i][index][ps_local] += worker_index * data_per_worker[i]
         else:
             return -1, -1, -1
-    return local_solution, reserve_server, data_matrix
+    return local_solution, reserve_server
 
 
 def benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker):
@@ -39,13 +38,13 @@ def benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker):
         ps = np.sum(local_solution[i], 0)
         ps_local = np.argmax(ps)
         for j in range(0, rack_num):
-            inc_benefit[i][j] = local_solution[i][j][ps_local] * d_per_worker[i]
+            inc_benefit[j][i] = local_solution[i][j][ps_local] * d_per_worker[i]
     return inc_benefit
 
 
 def inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait, rack_num, inc_usage):
-    inc_benefit_copy = inc_benefit[0:job_wait]
-    while all(inc_benefit_copy <= 0) == 0 and np.sum(inc_reserve) > 0:
+    inc_benefit_copy = copy.deepcopy(inc_benefit)
+    while np.max(inc_benefit) > 0 and np.sum(inc_reserve) > 0:
         row = [i for i in range(0, rack_num) if inc_reserve[i] == 0]
         col = [i for i in range(0, len(inc_job)) if i not in job_wait]
         for i in row:
@@ -53,14 +52,13 @@ def inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait, rack_num, inc_usag
         for i in col:
             inc_benefit_copy[:, i] = -1
         row_ch, col_ch = linear_sum_assignment(inc_benefit_copy, True)
-        for i in row_ch:
-            for j in col_ch:
-                if inc_benefit_copy[i][j] > 0:
-                    inc_usage[i][j] = 1
-                    inc_reserve[i] -= 1
-                    inc_benefit_copy[:, j] = -1
-                    inc_benefit[:, j] = -1
-                    inc_job[i] = 1
+        for i in range(0, len(row_ch)):
+            if inc_benefit_copy[row_ch[i]][col_ch[i]] > 0:
+                inc_usage[row_ch[i]][col_ch[i]] = 1
+                inc_reserve[row_ch[i]] -= 1
+                inc_benefit_copy[:, col_ch[i]] = -1
+                inc_benefit[:, col_ch[i]] = -1
+                inc_job[row_ch[i]] = 1
     return inc_usage, inc_reserve, inc_benefit, inc_job
 
 
@@ -68,14 +66,14 @@ def data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solu
     for i in new_job:
         ps = np.sum(local_solution[i], 0)
         ps_local = np.argmax(ps)
+        worker = np.sum(local_solution[i], 1)
+        if np.count_nonzero(worker) == 1:
+            all_in = 1
+        else:
+            all_in = 0
         for j in range(0, rack_num):
-            if inc_usage[i][j] == 0:
-                d_matrix[i][j][ps_local] = local_solution[i][j][ps_local] * d_per_worker[i]
-            else:
-                if ps_local == j:
-                    d_matrix[i][j][ps_local] = local_solution[i][j][ps_local] * d_per_worker[i]
-                else:
-                    d_matrix[i][j][ps_local] = d_per_worker[i]
+            if ps_local != j:
+                d_matrix[i][j][ps_local] =
     return d_matrix
 
 
@@ -96,7 +94,8 @@ def pct_rack(inc_usage, d_matrix, rack_index, local_solution, rack_num, job_agg,
         if sum([d_matrix[i][rack_index][j] for j in range(0, rack_num)]) > 0:
             relate_job_up.append(i)
             if inc_usage[i][rack_index] == 1:
-                traffic_up.append(sum([d_matrix[i][rack_index][j] for j in range(0, rack_num)]) * local_solution[i][rack_index])
+                traffic_up.append(
+                    sum([d_matrix[i][rack_index][j] for j in range(0, rack_num)]) * local_solution[i][rack_index])
             else:
                 traffic_up.append(sum([d_matrix[i][rack_index][j] for j in range(0, rack_num)]))
             if np.count_nonzero(local_solution[i]) > 1:
@@ -136,16 +135,15 @@ def pct_rack(inc_usage, d_matrix, rack_index, local_solution, rack_num, job_agg,
             else:
                 agg_oxc_down.append(0)
 
-
     # 上行：
     threshold = 0.01
     pct_up = bisection(relate_job_up, agg_up, traffic_up, b_tor[rack_index], threshold)
     pct_down = bisection(relate_job_down, agg_down, traffic_down, b_tor[rack_index], threshold)
     pct_oxc_up = bisection(relate_job_oxc_up, agg_oxc_up, traffic_oxc_up, b_per_port * port_per_rack, threshold)
     pct_oxc_down = bisection(relate_job_oxc_down, agg_oxc_down, traffic_oxc_down, b_per_port * port_per_rack, threshold)
-    return (pct_up, pct_down, pct_oxc_up, pct_oxc_down, relate_job_up, traffic_up, agg_up, relate_job_down, traffic_down,
-            agg_down, relate_job_oxc_up, traffic_oxc_up, agg_oxc_up, relate_job_oxc_down, traffic_oxc_down, agg_oxc_down)
-
+    return (
+        pct_up, pct_down, pct_oxc_up, pct_oxc_down, relate_job_up, traffic_up, agg_up, relate_job_down, traffic_down,
+        agg_down, relate_job_oxc_up, traffic_oxc_up, agg_oxc_up, relate_job_oxc_down, traffic_oxc_down, agg_oxc_down)
 
 
 def bisection(relate, agg, traffic, bandwidth, threshold):
@@ -177,7 +175,7 @@ def pct(inc_usage, d_matrix, rack_num, local_solution, job_agg, b_tor, b_oxc_por
     for i in range(0, rack_num):
         (pct_up, pct_down, pct_oxc_up, pct_oxc_down, relate_job_up, traffic_up, agg_up, relate_job_down, traffic_down,
          agg_down, relate_job_oxc_up, traffic_oxc_up, agg_oxc_up, relate_job_oxc_down, traffic_oxc_down,
-         agg_oxc_down) = pct_rack(inc_usage,d_matrix, i, local_solution, rack_num, job_agg, b_tor, b_oxc_port,
+         agg_oxc_down) = pct_rack(inc_usage, d_matrix, i, local_solution, rack_num, job_agg, b_tor, b_oxc_port,
                                   port_per_rack)
         port_t[i] += pct_up
         port_t[i + rack_num] += pct_down
@@ -207,16 +205,18 @@ def feasible_add(b_per_worker, relate, local_solution, b_tor_in, b_tor_out, b_in
         b_tor_out_test = copy.deepcopy(b_tor_out)
         b_inter_test = copy.deepcopy(b_inter)
         p_inter = np.zeros([rack_num, rack_num])
+        b_per_test = np.array([b_per_worker[u] + b_unit for u in range(0, rack_num)])
         for i in range(0, rack_num):
-            b_tor_in_test[i] += sum([local_solution[job_index][i][k] for k in range(0, rack_num)]) * b_per_worker[i]
-            b_tor_out_test[i] += ((1 - inc_usage[i][job_index]) * b_per_worker[job_index] *
+            b_tor_in_test[i] += sum([local_solution[job_index][i][k] for k in range(0, rack_num)]) * b_per_test[i]
+            b_tor_out_test[i] += ((1 - inc_usage[i][job_index]) * b_per_test[job_index] *
                                   (sum([(inc_usage[k][job_index] + (1 - inc_usage[k][job_index]) *
-                                   local_solution[job_index][k][i]) if k != i else local_solution[job_index][i][i] for
-                                   k in range(0, rack_num)])))
+                                         local_solution[job_index][k][i]) if k != i else local_solution[job_index][i][i]
+                                        for
+                                        k in range(0, rack_num)])))
             for j in range(0, rack_num):
                 if i != j:
                     b_inter_test[i][j] += (inc_usage[i][job_index] + (1 - inc_usage[i][job_index]) *
-                                           local_solution[job_index][i][j]) * b_per_worker
+                                           local_solution[job_index][i][j]) * b_per_test
                     p_inter[i][j] = np.ceil(b_inter_test[i][j] / b_oxc_port)
 
         in_resource = np.array([b_tor_in_test[i] - b_tor[i] for i in range(0, rack_num)])
@@ -233,36 +233,45 @@ def feasible_add(b_per_worker, relate, local_solution, b_tor_in, b_tor_out, b_in
                 for j in range(0, rack_num):
                     if i != j and d_matrix[i][j] > 0:
                         t_matrix[i][j] = (d_matrix[i][j] / (inc_usage[i][job_index] + (1 - inc_usage[i][job_index]) *
-                                          local_solution[job_index][i][j]) * (b_per_worker[job_index] + b_unit) +
+                                                            local_solution[job_index][i][j]) * (
+                                                  b_per_worker[job_index] + b_unit) +
                                           agg_time[job_index])
             t_add.append(np.max(t_matrix))
     return t_add
 
 
-def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_num, b_tor, b_oxc_port, port_per_rack, b_unit, b_per_worker, begin):
+def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_num, b_tor, b_oxc_port, port_per_rack,
+                       b_unit, b_per_worker, begin):
     for i in range(0, len(d_matrix)):
         if np.sum(d_matrix[i]) == 0:
             b_per_worker[i] = 0
         if np.sum(d_matrix[i]) > 0 and begin[i] == 1:
             b_per_worker[i] = b_unit
+
+    b_tor_up = []
+    b_tor_down = []
+    b_inter = np.zeros([rack_num, rack_num])
+    for i in range(0, rack_num):
+        b_tor_up.append(sum([sum([local_solution[j][i][k] for k in range(0, rack_num)]) * b_per_worker[j]] for j in
+                            range(0, len(d_matrix))))
+        b_tor_down.append(sum([(1 - inc_usage[i][j]) * b_per_worker[j] * (sum([(inc_usage[k][j] + (1 -
+                                                                                                   inc_usage[k][
+                                                                                                       j]) *
+                                                                                local_solution[j][k][
+                                                                                    i]) if k != i else
+                                                                               local_solution[j][i][i] for k
+                                                                               in range(0, rack_num)])) for j in
+                               range(0, len(d_matrix))]))
+    for i in range(0, rack_num):
+        for j in range(0, rack_num):
+            if i != j:
+                b_inter[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
+                                      b_per_worker[j] for k in range(0, len(d_matrix))])
+
     if algo == 1:
         (port_t, relate_up, tra_up, a_up, relate_down, tra_down, a_down, relate_oxc_up, tra_oxc_up, a_oxc_up,
          relate_oxc_down, tra_oxc_down, a_oxc_down) = pct(inc_usage, d_matrix, rack_num, local_solution, job_agg, b_tor,
                                                           b_oxc_port, port_per_rack)
-        b_tor_up = []
-        b_tor_down = []
-        b_inter = np.zeros([rack_num, rack_num])
-        for i in range(0, rack_num):
-            b_tor_up.append(sum([sum([local_solution[j][i][k] for k in range(0, rack_num)]) * b_per_worker[j]] for j in
-                                range(0, len(d_matrix))))
-            b_tor_down.append(sum([(1 - inc_usage[i][j]) * b_per_worker[j] * (sum([(inc_usage[k][j] + (1 -
-                              inc_usage[k][j]) * local_solution[j][k][i]) if k != i else local_solution[j][i][i] for k
-                              in range(0, rack_num)])) for j in range(0, len(d_matrix))]))
-        for i in range(0, rack_num):
-            for j in range(0, rack_num):
-                if i != j:
-                    b_inter[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
-                                          b_per_worker[j] for k in range(0, len(d_matrix))])
         sort_port = np.argsort(port_t)
         for i in sort_port:
             if i < rack_num:
@@ -297,14 +306,51 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
             for j in range(0, rack_num):
                 if i != j:
                     b_inter_new[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
-                                             b_per_worker[j] for k in range(0, len(d_matrix))])
+                                              b_per_worker[j] for k in range(0, len(d_matrix))])
         return b_per_worker, begin, b_inter_new
     if algo == 0:
-        for i in rack_num(0, len(d_matrix)):
-            if
+        for i in range(0, len(d_matrix)):
+            if np.sum(d_matrix[i]) > 0:
+                b_tor_up_test = copy.deepcopy(b_tor_up)
+                b_tor_down_test = copy.deepcopy(b_tor_down)
+                b_inter_test = copy.deepcopy(b_inter)
+                p_inter_test = np.array([rack_num, rack_num])
+                ps_local = np.argmax(
+                    [sum([local_solution[i][v][u] for v in range(0, rack_num)]) for u in range(0, rack_num)])
+                while 1:
+                    b_tor_down_test[ps_local] += (
+                            (1 - inc_usage[ps_local][i]) * b_unit * (sum([local_solution[i][u] if inc_usage[u][i] == 0
+                                                                          else 1 for u in range(0, rack_num)])))
+                    for u in range(0, rack_num):
+                        b_tor_up_test[u] += local_solution * b_unit
+                        if u != ps_local:
+                            b_inter_test[u][ps_local] += (
+                                    ((1 - inc_usage[u][i]) * local_solution[i][u][ps_local] + inc_usage[u][i]) * b_unit)
+                            if b_inter_test[u][ps_local] > 0:
+                                p_inter_test[u][ps_local] = np.ceil(b_inter_test[u][ps_local] / b_oxc_port)
+                                p_inter_test[ps_local][u] = np.ceil(b_inter_test[u][ps_local] / b_oxc_port)
+                    b_tor_up_reserve = b_tor - b_tor_up_test
+                    port_use = np.sum(p_inter_test, axis=0)
+                    port_reserve = np.array([port_per_rack - port_use[k] for k in range(0, rack_num)])
+                    if all(b_tor_up_reserve >= 0) == 1 and b_tor_down_test[ps_local] <= b_tor[ps_local] and all(port_reserve >= 0) == 1:
+                        b_per_worker[i] += b_unit
+                        b_tor_up = copy.deepcopy(b_tor_up_test)
+                        b_tor_down = copy.deepcopy(b_tor_down_test)
+                        b_inter = copy.deepcopy(b_inter_test)
+                        begin[i] = 1
+                    else:
+                        break
+        b_inter_new = np.zeros([rack_num, rack_num])
+        for i in range(0, rack_num):
+            for j in range(0, rack_num):
+                if i != j:
+                    b_inter_new[i][j] += sum([(inc_usage[i][k] + (1 - inc_usage[i][k]) * local_solution[k][i][j]) *
+                                              b_per_worker[j] for k in range(0, len(d_matrix))])
+        return b_per_worker, begin, b_inter_new
 
 
-def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worker, inc_usage, local_solution, begin, end):
+def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worker, inc_usage, local_solution, begin,
+          end):
     new_oxc_topo = np.zeros([rack_num, rack_num])
     recon_bandwidth = np.zeros(len(b_per_worker))
     for i in range(0, rack_num):
@@ -317,7 +363,8 @@ def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worke
     for i in range(0, rack_num):
         for j in range(0, rack_num):
             for k in range(0, len(b_per_worker)):
-                if add_oxc_topo[i][j] > 0 and begin[k] == 1 and end[k] == 0 and local_solution[k][i][j] > 0 and inc_usage[j][k] == 0:
+                if add_oxc_topo[i][j] > 0 and begin[k] == 1 and end[k] == 0 and local_solution[k][i][j] > 0 and \
+                        inc_usage[j][k] == 0:
                     recon_bandwidth[k] = abs(b_per_worker[k] - b_per_worker_old[k])
     return recon_bandwidth
 
@@ -328,7 +375,8 @@ def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solu
             for u in range(0, rack_num):
                 for v in range(0, rack_num):
                     data_tran = min(b_per_worker[i] * (local_solution[i][u][v] * (1 - inc_usage[u][i]) +
-                                    inc_usage[u][i]) - recon_bandwidth[i] * t_recon, d_matrix[i][u][v])
+                                                       inc_usage[u][i]) - recon_bandwidth[i] * t_recon,
+                                    d_matrix[i][u][v])
                     d_matrix[i][u][v] -= data_tran
     return d_matrix
 
@@ -341,7 +389,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
     reserve_server = np.array([server_per_rack for i in range(0, rack_num)])
     inc_usage = np.zeros([rack_num, len(job_worker_num)])
     inc_reserve = np.array([inc_limit for i in range(0, rack_num)])
-    inc_benefit = np.ones([rack_num, len(job_worker_num)])
+    inc_benefit = -1 * np.ones([rack_num, len(job_worker_num)])
     inc_job = []
     end = []
     begin = []
@@ -407,11 +455,11 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
             return 1
 
         # 消除旧业务占用+放置新业务
-        reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage, inc_reserve)
+        reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage,
+                                               inc_reserve)
         for i in new_end:
             end[i] = 1
-        local_solution, reserve_server, d_matrix = job_deploy(local_solution, reserve_server, new_job, job_worker_num,
-                                                              d_matrix, d_per_worker)
+        local_solution, reserve_server = job_deploy(local_solution, reserve_server, new_job, job_worker_num)
         # 分inc资源
         inc_benefit = benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker)
         inc_usage, inc_reserve, inc_benefit, inc_job = inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait,
@@ -436,6 +484,12 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
 
 arrive_time = []
 worker_num = []
+agg_time = []
+d_worker = []
+rack_number = 4
+port_num = 12
+b_tor = [240 for i1 in range(0, rack_number)]
+b_oxc_port = [40 for i2 in range(0, rack_number)]
 with open("simulate_time.txt", 'r') as file:
     for line in file:
         # 去除行尾的换行符，并以逗号分割行数据
@@ -450,4 +504,18 @@ with open("simulate_worker.txt", 'r') as file:
         num = int(columns[0])
         worker_num.append(num)
 
-schedule(8, 64, 60, arrive_time, worker_num, [], [], [], [], 1)
+with open("PS_time.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        num = float(columns[0])
+        agg_time.append(num)
+
+with open("Datasize.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        num = float(columns[0])
+        d_worker.append(num)
+
+schedule(rack_number, 64, 5, arrive_time, worker_num, agg_time, d_worker, 1, 1, 1, b_tor, b_oxc_port, port_num, 5, 0.1)

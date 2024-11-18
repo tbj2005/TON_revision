@@ -46,13 +46,17 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
     fn_uj = model.addVars(rack_num, job_num, vtype=GRB.INTEGER, name="flow_uj")
     fn_uvj = model.addVars(rack_num, rack_num, job_num, vtype=GRB.INTEGER, name="fn_uvj")
     ub_uvjt = model.addVars(rack_num, rack_num, job_num, ts_num, vtype=GRB.CONTINUOUS, name="ub_uvjt")
-    e_jt = model.addVars(job_num, ts_num, vtype=GRB.BINARY, name="e_jt")
+    e_j = model.addVars(job_num, vtype=GRB.BINARY, name="e_j")
 
     w_uj = np.zeros([rack_num, job_num])
     ps_uj = np.zeros([rack_num, job_num])
     for j in range(0, job_num):
         worker = np.sum(l_no_inc[j], axis=1)
         ps = np.sum(l_no_inc[j], axis=0)
+        if np.count_nonzero(worker) == 1:
+            model.addConstr(e_j[j] == 1, name="")
+        else:
+            model.addConstr(e_j[j] == 0, name="")
         for u in range(0, rack_num):
             w_uj[u][j] = worker[u]
             if ps[u] > 0:
@@ -94,8 +98,8 @@ def ilp(job_num, ts_num, ts_len, rack_num, agg_time, n_inc, l_no_inc, b_in, b_ou
             if u != v:
                 model.addConstrs((fn_uvj[u, v, j] == fn_uj[u, j] * ps_uj[v][j] for j in range(0, job_num)), name="")
             else:
-                model.addConstrs((fn_uvj[u, u, j] == w_uj[u][j] * (ps_uj[u][j] * (1 - k_ju[j, u]) + k_ju[j, u]) for j in
-                                  range(0, job_num)), name="")
+                model.addConstrs((fn_uvj[u, u, j] == w_uj[u][j] * (ps_uj[u][j] * (1 - k_ju[j, u]) + k_ju[j, u] * e_j[j])
+                                  for j in range(0, job_num)), name="")
 
     for u in range(0, rack_num):
         for v in range(0, rack_num):
