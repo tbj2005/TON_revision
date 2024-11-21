@@ -1,0 +1,317 @@
+\ Model Time-sharing scheduling of jobs_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ R279: - 1000 x_jt[1,19] + c_jt[1,19] <= 0
+ R356: 16 k_jv[1,3] + fn_uj[3,1] = 16
+ R431: - fn_uj[3,1] + fn_uvj[3,2,1] = 0
+ R436: - 16 k_jv[1,3] + fn_uvj[3,3,1] = 0
+ R511: d_uvjt[3,2,1,0] - 107 fn_uvj[3,2,1] = 0
+ R516: d_uvjt[3,3,1,0] - 107 fn_uvj[3,3,1] = 0
+ R1060: p_uvt[3,0,0] + p_uvt[3,1,0] + p_uvt[3,2,0] + p_uvt[3,3,0] <= 12
+ R1062: p_uvt[3,0,2] + p_uvt[3,1,2] + p_uvt[3,2,2] + p_uvt[3,3,2] <= 12
+ R4301: b_uvji[3,2,1,3] - b_uvji[3,2,1,4] + delta_b_uvjt[3,2,1,4] = 0
+ R4306: b_uvji[3,2,1,4] - b_uvji[3,2,1,5] + delta_b_uvjt[3,2,1,5] = 0
+ R4311: b_uvji[3,2,1,5] - b_uvji[3,2,1,6] + delta_b_uvjt[3,2,1,6] = 0
+ R4316: b_uvji[3,2,1,6] - b_uvji[3,2,1,7] + delta_b_uvjt[3,2,1,7] = 0
+ R4321: b_uvji[3,2,1,7] - b_uvji[3,2,1,8] + delta_b_uvjt[3,2,1,8] = 0
+ R4326: b_uvji[3,2,1,8] - b_uvji[3,2,1,9] + delta_b_uvjt[3,2,1,9] = 0
+ R4331: b_uvji[3,2,1,9] - b_uvji[3,2,1,10] + delta_b_uvjt[3,2,1,10] = 0
+ R4336: b_uvji[3,2,1,10] - b_uvji[3,2,1,11] + delta_b_uvjt[3,2,1,11] = 0
+ R4341: b_uvji[3,2,1,11] - b_uvji[3,2,1,12] + delta_b_uvjt[3,2,1,12] = 0
+ R4346: b_uvji[3,2,1,12] - b_uvji[3,2,1,13] + delta_b_uvjt[3,2,1,13] = 0
+ R4351: b_uvji[3,2,1,13] - b_uvji[3,2,1,14] + delta_b_uvjt[3,2,1,14] = 0
+ R4356: b_uvji[3,2,1,14] - b_uvji[3,2,1,15] + delta_b_uvjt[3,2,1,15] = 0
+ R4361: b_uvji[3,2,1,15] - b_uvji[3,2,1,16] + delta_b_uvjt[3,2,1,16] = 0
+ R4366: b_uvji[3,2,1,16] - b_uvji[3,2,1,17] + delta_b_uvjt[3,2,1,17] = 0
+ R4371: b_uvji[3,2,1,17] - b_uvji[3,2,1,18] + delta_b_uvjt[3,2,1,18] = 0
+ R4376: b_uvji[3,2,1,18] - b_uvji[3,2,1,19] + delta_b_uvjt[3,2,1,19] = 0
+ R4486: b_uvji[3,3,1,0] - b_uvji[3,3,1,1] + delta_b_uvjt[3,3,1,1] = 0
+ R4491: b_uvji[3,3,1,1] - b_uvji[3,3,1,2] + delta_b_uvjt[3,3,1,2] = 0
+ R4501: b_uvji[3,3,1,3] - b_uvji[3,3,1,4] + delta_b_uvjt[3,3,1,4] = 0
+ R4506: b_uvji[3,3,1,4] - b_uvji[3,3,1,5] + delta_b_uvjt[3,3,1,5] = 0
+ R4511: b_uvji[3,3,1,5] - b_uvji[3,3,1,6] + delta_b_uvjt[3,3,1,6] = 0
+ R4516: b_uvji[3,3,1,6] - b_uvji[3,3,1,7] + delta_b_uvjt[3,3,1,7] = 0
+ R4521: b_uvji[3,3,1,7] - b_uvji[3,3,1,8] + delta_b_uvjt[3,3,1,8] = 0
+ R4526: b_uvji[3,3,1,8] - b_uvji[3,3,1,9] + delta_b_uvjt[3,3,1,9] = 0
+ R4531: b_uvji[3,3,1,9] - b_uvji[3,3,1,10] + delta_b_uvjt[3,3,1,10] = 0
+ R4536: b_uvji[3,3,1,10] - b_uvji[3,3,1,11] + delta_b_uvjt[3,3,1,11] = 0
+ R4541: b_uvji[3,3,1,11] - b_uvji[3,3,1,12] + delta_b_uvjt[3,3,1,12] = 0
+ R4546: b_uvji[3,3,1,12] - b_uvji[3,3,1,13] + delta_b_uvjt[3,3,1,13] = 0
+ R4551: b_uvji[3,3,1,13] - b_uvji[3,3,1,14] + delta_b_uvjt[3,3,1,14] = 0
+ R4556: b_uvji[3,3,1,14] - b_uvji[3,3,1,15] + delta_b_uvjt[3,3,1,15] = 0
+ R4561: b_uvji[3,3,1,15] - b_uvji[3,3,1,16] + delta_b_uvjt[3,3,1,16] = 0
+ R4566: b_uvji[3,3,1,16] - b_uvji[3,3,1,17] + delta_b_uvjt[3,3,1,17] = 0
+ R4571: b_uvji[3,3,1,17] - b_uvji[3,3,1,18] + delta_b_uvjt[3,3,1,18] = 0
+ R4576: b_uvji[3,3,1,18] - b_uvji[3,3,1,19] + delta_b_uvjt[3,3,1,19] = 0
+ R8051: - x_jt[1,19] + 1000 d_uvjt[0,0,1,19] + 1000 d_uvjt[0,1,1,19]
+   + 1000 d_uvjt[0,2,1,19] + 1000 d_uvjt[0,3,1,19] + 1000 d_uvjt[1,0,1,19]
+   + 1000 d_uvjt[1,1,1,19] + 1000 d_uvjt[1,2,1,19] + 1000 d_uvjt[1,3,1,19]
+   + 1000 d_uvjt[2,0,1,19] + 1000 d_uvjt[2,1,1,19] + 1000 d_uvjt[2,2,1,19]
+   + 1000 d_uvjt[2,3,1,19] + 1000 d_uvjt[3,0,1,19] + 1000 d_uvjt[3,1,1,19]
+   + 1000 d_uvjt[3,2,1,19] + 1000 d_uvjt[3,3,1,19] >= 0
+ R8136: d_uvjt[0,0,1,19] <= 0
+ R8141: d_uvjt[0,1,1,19] <= 0
+ R8146: d_uvjt[0,2,1,19] <= 0
+ R8151: d_uvjt[0,3,1,19] <= 0
+ R8156: d_uvjt[1,0,1,19] <= 0
+ R8161: d_uvjt[1,1,1,19] <= 0
+ R8166: d_uvjt[1,2,1,19] <= 0
+ R8171: d_uvjt[1,3,1,19] <= 0
+ R8176: d_uvjt[2,0,1,19] <= 0
+ R8181: d_uvjt[2,1,1,19] <= 0
+ R8186: d_uvjt[2,2,1,19] <= 0
+ R8191: d_uvjt[2,3,1,19] <= 0
+ R8196: d_uvjt[3,0,1,19] <= 0
+ R8201: d_uvjt[3,1,1,19] <= 0
+ R8206: d_uvjt[3,2,1,19] <= 0
+ R8211: d_uvjt[3,3,1,19] <= 0
+ qc0: b_uvji[3,2,1,1] + [ - c_jt[1,1] * fn_uvj[3,2,1] ] = 0
+ qc1: b_uvji[3,2,1,19] + [ - c_jt[1,19] * fn_uvj[3,2,1] ] = 0
+ qc2: b_uvji[3,3,1,2] + [ - c_jt[1,2] * fn_uvj[3,3,1] ] = 0
+ qc3: b_uvji[3,3,1,19] + [ - c_jt[1,19] * fn_uvj[3,3,1] ] = 0
+ qc4: 16 c_jt[1,1] + b_uvji[0,3,0,1] + b_uvji[0,3,1,1] + b_uvji[0,3,2,1]
+   + b_uvji[0,3,3,1] + b_uvji[0,3,4,1] + b_uvji[1,3,0,1] + b_uvji[1,3,1,1]
+   + b_uvji[1,3,2,1] + b_uvji[1,3,3,1] + b_uvji[1,3,4,1] + b_uvji[2,3,0,1]
+   + b_uvji[2,3,1,1] + b_uvji[2,3,2,1] + b_uvji[2,3,3,1] + b_uvji[2,3,4,1]
+   + b_uvji[3,3,0,1] + b_uvji[3,3,1,1] + b_uvji[3,3,2,1] + b_uvji[3,3,3,1]
+   + b_uvji[3,3,4,1] + [ - k_jv[0,3] * b_uvji[3,3,0,1]
+   - k_jv[1,3] * b_uvji[3,3,1,1] - k_jv[2,3] * b_uvji[3,3,2,1]
+   - k_jv[3,3] * b_uvji[3,3,3,1] - k_jv[4,3] * b_uvji[3,3,4,1] ] <= 480
+ qc5: 16 c_jt[1,2] + b_uvji[0,3,0,2] + b_uvji[0,3,1,2] + b_uvji[0,3,2,2]
+   + b_uvji[0,3,3,2] + b_uvji[0,3,4,2] + b_uvji[1,3,0,2] + b_uvji[1,3,1,2]
+   + b_uvji[1,3,2,2] + b_uvji[1,3,3,2] + b_uvji[1,3,4,2] + b_uvji[2,3,0,2]
+   + b_uvji[2,3,1,2] + b_uvji[2,3,2,2] + b_uvji[2,3,3,2] + b_uvji[2,3,4,2]
+   + b_uvji[3,3,0,2] + b_uvji[3,3,1,2] + b_uvji[3,3,2,2] + b_uvji[3,3,3,2]
+   + b_uvji[3,3,4,2] + [ - k_jv[0,3] * b_uvji[3,3,0,2]
+   - k_jv[1,3] * b_uvji[3,3,1,2] - k_jv[2,3] * b_uvji[3,3,2,2]
+   - k_jv[3,3] * b_uvji[3,3,3,2] - k_jv[4,3] * b_uvji[3,3,4,2] ] <= 480
+ qc6: 40 p_uvt[3,2,0] + [ - x_jt[0,0] * b_uvji[2,3,0,0]
+   - x_jt[0,0] * b_uvji[3,2,0,0] - x_jt[1,0] * b_uvji[2,3,1,0]
+   - x_jt[1,0] * b_uvji[3,2,1,0] - x_jt[2,0] * b_uvji[2,3,2,0]
+   - x_jt[2,0] * b_uvji[3,2,2,0] - x_jt[3,0] * b_uvji[2,3,3,0]
+   - x_jt[3,0] * b_uvji[3,2,3,0] - x_jt[4,0] * b_uvji[2,3,4,0]
+   - x_jt[4,0] * b_uvji[3,2,4,0] ] >= 0
+ qc7: 40 p_uvt[3,2,2] + [ - x_jt[0,2] * b_uvji[2,3,0,2]
+   - x_jt[0,2] * b_uvji[3,2,0,2] - x_jt[1,2] * b_uvji[2,3,1,2]
+   - x_jt[1,2] * b_uvji[3,2,1,2] - x_jt[2,2] * b_uvji[2,3,2,2]
+   - x_jt[2,2] * b_uvji[3,2,2,2] - x_jt[3,2] * b_uvji[2,3,3,2]
+   - x_jt[3,2] * b_uvji[3,2,3,2] - x_jt[4,2] * b_uvji[2,3,4,2]
+   - x_jt[4,2] * b_uvji[3,2,4,2] ] >= 0
+ qc8: - d_uvjt[3,2,1,0] + d_uvjt[3,2,1,1] + [ x_jt[1,0] * b_uvji[3,2,1,0]
+   - 0.1 r_uvt[3,2,0] * ub_uvjt[3,2,1,0] ] >= 0
+ qc9: - d_uvjt[3,2,1,1] + d_uvjt[3,2,1,2] + [ x_jt[1,1] * b_uvji[3,2,1,1]
+   - 0.1 r_uvt[3,2,1] * ub_uvjt[3,2,1,1] ] >= 0
+ qc10: - d_uvjt[3,2,1,2] + d_uvjt[3,2,1,3] + [ x_jt[1,2] * b_uvji[3,2,1,2]
+   - 0.1 r_uvt[3,2,2] * ub_uvjt[3,2,1,2] ] >= 0
+ qc11: - d_uvjt[3,2,1,3] + d_uvjt[3,2,1,4] + [ x_jt[1,3] * b_uvji[3,2,1,3]
+   - 0.1 r_uvt[3,2,3] * ub_uvjt[3,2,1,3] ] >= 0
+ qc12: - d_uvjt[3,2,1,4] + d_uvjt[3,2,1,5] + [ x_jt[1,4] * b_uvji[3,2,1,4]
+   - 0.1 r_uvt[3,2,4] * ub_uvjt[3,2,1,4] ] >= 0
+ qc13: - d_uvjt[3,2,1,5] + d_uvjt[3,2,1,6] + [ x_jt[1,5] * b_uvji[3,2,1,5]
+   - 0.1 r_uvt[3,2,5] * ub_uvjt[3,2,1,5] ] >= 0
+ qc14: - d_uvjt[3,2,1,6] + d_uvjt[3,2,1,7] + [ x_jt[1,6] * b_uvji[3,2,1,6]
+   - 0.1 r_uvt[3,2,6] * ub_uvjt[3,2,1,6] ] >= 0
+ qc15: - d_uvjt[3,2,1,7] + d_uvjt[3,2,1,8] + [ x_jt[1,7] * b_uvji[3,2,1,7]
+   - 0.1 r_uvt[3,2,7] * ub_uvjt[3,2,1,7] ] >= 0
+ qc16: - d_uvjt[3,2,1,8] + d_uvjt[3,2,1,9] + [ x_jt[1,8] * b_uvji[3,2,1,8]
+   - 0.1 r_uvt[3,2,8] * ub_uvjt[3,2,1,8] ] >= 0
+ qc17: - d_uvjt[3,2,1,9] + d_uvjt[3,2,1,10] + [ x_jt[1,9] * b_uvji[3,2,1,9]
+   - 0.1 r_uvt[3,2,9] * ub_uvjt[3,2,1,9] ] >= 0
+ qc18: - d_uvjt[3,2,1,10] + d_uvjt[3,2,1,11] + [
+   x_jt[1,10] * b_uvji[3,2,1,10] - 0.1 r_uvt[3,2,10] * ub_uvjt[3,2,1,10] ]
+   >= 0
+ qc19: - d_uvjt[3,2,1,11] + d_uvjt[3,2,1,12] + [
+   x_jt[1,11] * b_uvji[3,2,1,11] - 0.1 r_uvt[3,2,11] * ub_uvjt[3,2,1,11] ]
+   >= 0
+ qc20: - d_uvjt[3,2,1,12] + d_uvjt[3,2,1,13] + [
+   x_jt[1,12] * b_uvji[3,2,1,12] - 0.1 r_uvt[3,2,12] * ub_uvjt[3,2,1,12] ]
+   >= 0
+ qc21: - d_uvjt[3,2,1,13] + d_uvjt[3,2,1,14] + [
+   x_jt[1,13] * b_uvji[3,2,1,13] - 0.1 r_uvt[3,2,13] * ub_uvjt[3,2,1,13] ]
+   >= 0
+ qc22: - d_uvjt[3,2,1,14] + d_uvjt[3,2,1,15] + [
+   x_jt[1,14] * b_uvji[3,2,1,14] - 0.1 r_uvt[3,2,14] * ub_uvjt[3,2,1,14] ]
+   >= 0
+ qc23: - d_uvjt[3,2,1,15] + d_uvjt[3,2,1,16] + [
+   x_jt[1,15] * b_uvji[3,2,1,15] - 0.1 r_uvt[3,2,15] * ub_uvjt[3,2,1,15] ]
+   >= 0
+ qc24: - d_uvjt[3,2,1,16] + d_uvjt[3,2,1,17] + [
+   x_jt[1,16] * b_uvji[3,2,1,16] - 0.1 r_uvt[3,2,16] * ub_uvjt[3,2,1,16] ]
+   >= 0
+ qc25: - d_uvjt[3,2,1,17] + d_uvjt[3,2,1,18] + [
+   x_jt[1,17] * b_uvji[3,2,1,17] - 0.1 r_uvt[3,2,17] * ub_uvjt[3,2,1,17] ]
+   >= 0
+ qc26: - d_uvjt[3,2,1,18] + d_uvjt[3,2,1,19] + [
+   x_jt[1,18] * b_uvji[3,2,1,18] - 0.1 r_uvt[3,2,18] * ub_uvjt[3,2,1,18] ]
+   >= 0
+ qc27: - d_uvjt[3,3,1,0] + d_uvjt[3,3,1,1] + [ x_jt[1,0] * b_uvji[3,3,1,0]
+   - 0.1 r_uvt[3,3,0] * ub_uvjt[3,3,1,0] ] >= 0
+ qc28: - d_uvjt[3,3,1,1] + d_uvjt[3,3,1,2] + [ x_jt[1,1] * b_uvji[3,3,1,1]
+   - 0.1 r_uvt[3,3,1] * ub_uvjt[3,3,1,1] ] >= 0
+ qc29: - d_uvjt[3,3,1,2] + d_uvjt[3,3,1,3] + [ x_jt[1,2] * b_uvji[3,3,1,2]
+   - 0.1 r_uvt[3,3,2] * ub_uvjt[3,3,1,2] ] >= 0
+ qc30: - d_uvjt[3,3,1,3] + d_uvjt[3,3,1,4] + [ x_jt[1,3] * b_uvji[3,3,1,3]
+   - 0.1 r_uvt[3,3,3] * ub_uvjt[3,3,1,3] ] >= 0
+ qc31: - d_uvjt[3,3,1,4] + d_uvjt[3,3,1,5] + [ x_jt[1,4] * b_uvji[3,3,1,4]
+   - 0.1 r_uvt[3,3,4] * ub_uvjt[3,3,1,4] ] >= 0
+ qc32: - d_uvjt[3,3,1,5] + d_uvjt[3,3,1,6] + [ x_jt[1,5] * b_uvji[3,3,1,5]
+   - 0.1 r_uvt[3,3,5] * ub_uvjt[3,3,1,5] ] >= 0
+ qc33: - d_uvjt[3,3,1,6] + d_uvjt[3,3,1,7] + [ x_jt[1,6] * b_uvji[3,3,1,6]
+   - 0.1 r_uvt[3,3,6] * ub_uvjt[3,3,1,6] ] >= 0
+ qc34: - d_uvjt[3,3,1,7] + d_uvjt[3,3,1,8] + [ x_jt[1,7] * b_uvji[3,3,1,7]
+   - 0.1 r_uvt[3,3,7] * ub_uvjt[3,3,1,7] ] >= 0
+ qc35: - d_uvjt[3,3,1,8] + d_uvjt[3,3,1,9] + [ x_jt[1,8] * b_uvji[3,3,1,8]
+   - 0.1 r_uvt[3,3,8] * ub_uvjt[3,3,1,8] ] >= 0
+ qc36: - d_uvjt[3,3,1,9] + d_uvjt[3,3,1,10] + [ x_jt[1,9] * b_uvji[3,3,1,9]
+   - 0.1 r_uvt[3,3,9] * ub_uvjt[3,3,1,9] ] >= 0
+ qc37: - d_uvjt[3,3,1,10] + d_uvjt[3,3,1,11] + [
+   x_jt[1,10] * b_uvji[3,3,1,10] - 0.1 r_uvt[3,3,10] * ub_uvjt[3,3,1,10] ]
+   >= 0
+ qc38: - d_uvjt[3,3,1,11] + d_uvjt[3,3,1,12] + [
+   x_jt[1,11] * b_uvji[3,3,1,11] - 0.1 r_uvt[3,3,11] * ub_uvjt[3,3,1,11] ]
+   >= 0
+ qc39: - d_uvjt[3,3,1,12] + d_uvjt[3,3,1,13] + [
+   x_jt[1,12] * b_uvji[3,3,1,12] - 0.1 r_uvt[3,3,12] * ub_uvjt[3,3,1,12] ]
+   >= 0
+ qc40: - d_uvjt[3,3,1,13] + d_uvjt[3,3,1,14] + [
+   x_jt[1,13] * b_uvji[3,3,1,13] - 0.1 r_uvt[3,3,13] * ub_uvjt[3,3,1,13] ]
+   >= 0
+ qc41: - d_uvjt[3,3,1,14] + d_uvjt[3,3,1,15] + [
+   x_jt[1,14] * b_uvji[3,3,1,14] - 0.1 r_uvt[3,3,14] * ub_uvjt[3,3,1,14] ]
+   >= 0
+ qc42: - d_uvjt[3,3,1,15] + d_uvjt[3,3,1,16] + [
+   x_jt[1,15] * b_uvji[3,3,1,15] - 0.1 r_uvt[3,3,15] * ub_uvjt[3,3,1,15] ]
+   >= 0
+ qc43: - d_uvjt[3,3,1,16] + d_uvjt[3,3,1,17] + [
+   x_jt[1,16] * b_uvji[3,3,1,16] - 0.1 r_uvt[3,3,16] * ub_uvjt[3,3,1,16] ]
+   >= 0
+ qc44: - d_uvjt[3,3,1,17] + d_uvjt[3,3,1,18] + [
+   x_jt[1,17] * b_uvji[3,3,1,17] - 0.1 r_uvt[3,3,17] * ub_uvjt[3,3,1,17] ]
+   >= 0
+ qc45: - d_uvjt[3,3,1,18] + d_uvjt[3,3,1,19] + [
+   x_jt[1,18] * b_uvji[3,3,1,18] - 0.1 r_uvt[3,3,18] * ub_uvjt[3,3,1,18] ]
+   >= 0
+Bounds
+ c_jt[1,1] free
+ c_jt[1,2] free
+ c_jt[1,19] free
+ b_uvji[3,2,1,0] free
+ b_uvji[3,2,1,1] free
+ b_uvji[3,2,1,2] free
+ b_uvji[3,2,1,3] free
+ b_uvji[3,2,1,4] free
+ b_uvji[3,2,1,5] free
+ b_uvji[3,2,1,6] free
+ b_uvji[3,2,1,7] free
+ b_uvji[3,2,1,8] free
+ b_uvji[3,2,1,9] free
+ b_uvji[3,2,1,10] free
+ b_uvji[3,2,1,11] free
+ b_uvji[3,2,1,12] free
+ b_uvji[3,2,1,13] free
+ b_uvji[3,2,1,14] free
+ b_uvji[3,2,1,15] free
+ b_uvji[3,2,1,16] free
+ b_uvji[3,2,1,17] free
+ b_uvji[3,2,1,18] free
+ b_uvji[3,2,1,19] free
+ b_uvji[3,3,1,0] free
+ b_uvji[3,3,1,1] free
+ b_uvji[3,3,1,2] free
+ b_uvji[3,3,1,3] free
+ b_uvji[3,3,1,4] free
+ b_uvji[3,3,1,5] free
+ b_uvji[3,3,1,6] free
+ b_uvji[3,3,1,7] free
+ b_uvji[3,3,1,8] free
+ b_uvji[3,3,1,9] free
+ b_uvji[3,3,1,10] free
+ b_uvji[3,3,1,11] free
+ b_uvji[3,3,1,12] free
+ b_uvji[3,3,1,13] free
+ b_uvji[3,3,1,14] free
+ b_uvji[3,3,1,15] free
+ b_uvji[3,3,1,16] free
+ b_uvji[3,3,1,17] free
+ b_uvji[3,3,1,18] free
+ b_uvji[3,3,1,19] free
+ d_uvjt[0,0,1,19] free
+ d_uvjt[0,1,1,19] free
+ d_uvjt[0,2,1,19] free
+ d_uvjt[0,3,1,19] free
+ d_uvjt[1,0,1,19] free
+ d_uvjt[1,1,1,19] free
+ d_uvjt[1,2,1,19] free
+ d_uvjt[1,3,1,19] free
+ d_uvjt[2,0,1,19] free
+ d_uvjt[2,1,1,19] free
+ d_uvjt[2,2,1,19] free
+ d_uvjt[2,3,1,19] free
+ d_uvjt[3,0,1,19] free
+ d_uvjt[3,1,1,19] free
+ d_uvjt[3,2,1,0] free
+ d_uvjt[3,2,1,1] free
+ d_uvjt[3,2,1,2] free
+ d_uvjt[3,2,1,3] free
+ d_uvjt[3,2,1,4] free
+ d_uvjt[3,2,1,5] free
+ d_uvjt[3,2,1,6] free
+ d_uvjt[3,2,1,7] free
+ d_uvjt[3,2,1,8] free
+ d_uvjt[3,2,1,9] free
+ d_uvjt[3,2,1,10] free
+ d_uvjt[3,2,1,11] free
+ d_uvjt[3,2,1,12] free
+ d_uvjt[3,2,1,13] free
+ d_uvjt[3,2,1,14] free
+ d_uvjt[3,2,1,15] free
+ d_uvjt[3,2,1,16] free
+ d_uvjt[3,2,1,17] free
+ d_uvjt[3,2,1,18] free
+ d_uvjt[3,2,1,19] free
+ d_uvjt[3,3,1,0] free
+ d_uvjt[3,3,1,1] free
+ d_uvjt[3,3,1,2] free
+ d_uvjt[3,3,1,3] free
+ d_uvjt[3,3,1,4] free
+ d_uvjt[3,3,1,5] free
+ d_uvjt[3,3,1,6] free
+ d_uvjt[3,3,1,7] free
+ d_uvjt[3,3,1,8] free
+ d_uvjt[3,3,1,9] free
+ d_uvjt[3,3,1,10] free
+ d_uvjt[3,3,1,11] free
+ d_uvjt[3,3,1,12] free
+ d_uvjt[3,3,1,13] free
+ d_uvjt[3,3,1,14] free
+ d_uvjt[3,3,1,15] free
+ d_uvjt[3,3,1,16] free
+ d_uvjt[3,3,1,17] free
+ d_uvjt[3,3,1,18] free
+ d_uvjt[3,3,1,19] free
+ p_uvt[3,2,0] free
+ p_uvt[3,2,2] free
+ fn_uj[3,1] free
+ fn_uvj[3,2,1] free
+ fn_uvj[3,3,1] free
+Binaries
+ k_jv[0,3] k_jv[1,3] k_jv[2,3] k_jv[3,3] k_jv[4,3] x_jt[0,0] x_jt[0,2]
+ x_jt[1,0] x_jt[1,1] x_jt[1,2] x_jt[1,3] x_jt[1,4] x_jt[1,5] x_jt[1,6]
+ x_jt[1,7] x_jt[1,8] x_jt[1,9] x_jt[1,10] x_jt[1,11] x_jt[1,12] x_jt[1,13]
+ x_jt[1,14] x_jt[1,15] x_jt[1,16] x_jt[1,17] x_jt[1,18] x_jt[1,19]
+ x_jt[2,0] x_jt[2,2] x_jt[3,0] x_jt[3,2] x_jt[4,0] x_jt[4,2] r_uvt[3,2,0]
+ r_uvt[3,2,1] r_uvt[3,2,2] r_uvt[3,2,3] r_uvt[3,2,4] r_uvt[3,2,5]
+ r_uvt[3,2,6] r_uvt[3,2,7] r_uvt[3,2,8] r_uvt[3,2,9] r_uvt[3,2,10]
+ r_uvt[3,2,11] r_uvt[3,2,12] r_uvt[3,2,13] r_uvt[3,2,14] r_uvt[3,2,15]
+ r_uvt[3,2,16] r_uvt[3,2,17] r_uvt[3,2,18] r_uvt[3,3,0] r_uvt[3,3,1]
+ r_uvt[3,3,2] r_uvt[3,3,3] r_uvt[3,3,4] r_uvt[3,3,5] r_uvt[3,3,6]
+ r_uvt[3,3,7] r_uvt[3,3,8] r_uvt[3,3,9] r_uvt[3,3,10] r_uvt[3,3,11]
+ r_uvt[3,3,12] r_uvt[3,3,13] r_uvt[3,3,14] r_uvt[3,3,15] r_uvt[3,3,16]
+ r_uvt[3,3,17] r_uvt[3,3,18]
+Generals
+ p_uvt[3,0,0] p_uvt[3,0,2] p_uvt[3,1,0] p_uvt[3,1,2] p_uvt[3,2,0]
+ p_uvt[3,2,2] p_uvt[3,3,0] p_uvt[3,3,2] fn_uj[3,1] fn_uvj[3,2,1]
+ fn_uvj[3,3,1]
+End
