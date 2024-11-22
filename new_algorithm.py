@@ -284,6 +284,7 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
 
     b_tor_bi = b_tor_up + b_tor_down
     b_inter_bi = b_inter + b_inter.T
+    
     if algo == 1:
         port_t, relate, tra, agg, relate_oxc, tra_oxc, agg_oxc = (
             pct_count(inc_usage, d_matrix, rack_num, local_solution, job_agg, b_tor, b_oxc_port, port_per_rack))
@@ -340,7 +341,8 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
                     break
 
         return b_per_worker, begin, b_inter_bi
-    if algo == 0:
+    
+    if algo == 0 :
         for job_index in range(0, len(d_matrix)):
             flag = 0
             if np.sum(d_matrix[job_index]) > 0:
@@ -551,14 +553,14 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         # 更新剩余数据量
         d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
-
+start_time=time.time()
 arrive_time = []
 worker_num = []
 agg_time = []
 d_worker = []
 rack_number = 32
 port_num = 12
-b_tor = [240 for i1 in range(0, rack_number)]
+b_tor = [480 for i1 in range(0, rack_number)]
 b_oxc_port = [40 for i2 in range(0, rack_number)]
 with open("simulate_time.txt", 'r') as file:
     for line in file:
@@ -588,10 +590,20 @@ with open("Datasize.txt", 'r') as file:
         num = float(columns[0])
         d_worker.append(num)
 
-t1, r1 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 1, 1, 1, b_tor,
-                b_oxc_port, port_num, 1, 0.1)
-print(t1, r1)
+t1, r1 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 0, 1, 0, b_tor,
+                b_oxc_port, port_num, 1, 0.2)
+print("noINC-FCFS:",t1, r1)
 
-t2, r2 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 0, 1, 1, b_tor,
-                b_oxc_port, port_num, 1, 0.1)
-print(t2, r2)
+t2, r2 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 1, 1, 0, b_tor,
+                b_oxc_port, port_num, 1, 0.2)
+print("noINC-Algo:",t2, r2)
+
+t3, r3 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 0, 1, 2, b_tor,
+                b_oxc_port, port_num, 1, 0.2)
+print("INC-FCFS:",t3, r3)
+
+t4, r4 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 1, 1, 2, b_tor,
+                b_oxc_port, port_num, 1, 0.2)
+print("INC-Algo:",t4, r4)
+end_time=time.time()
+print("span_time:",end_time-start_time)
