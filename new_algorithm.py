@@ -9,15 +9,16 @@ def job_exit(rack_num, local_solution, reserve_server, add_end, inc_usage, inc_r
         worker = np.sum(local_solution[i], axis=1)
         ps = np.sum(local_solution[i], axis=0)
         for r in range(0, rack_num):
-            reserve_server[r] -= worker[r]
+            reserve_server[r] += worker[r]
             if ps[r] > 0:
-                reserve_server[r] -= 1
+                reserve_server[r] += 1
             if inc_usage[r][i] == 1:
-                inc_reserve[r] -= 1
+                inc_reserve[r] += 1
     return reserve_server, inc_reserve
 
 
 def job_deploy(local_solution, reserve_server, new_job, job_worker_num):
+    pending_job = []
     for i in new_job:
         if job_worker_num[i] + 1 <= np.sum(reserve_server):
             ps_local = np.argmax(reserve_server)
@@ -30,14 +31,16 @@ def job_deploy(local_solution, reserve_server, new_job, job_worker_num):
                 local_solution[i][index][ps_local] += worker_index
                 reserve_server[index] -= worker_index
         else:
-            return -1, -1
-    return local_solution, reserve_server
+            pending_job.append(i)
+    return local_solution, reserve_server, pending_job
 
 
 def benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker):
     for i in new_job:
         ps = np.sum(local_solution[i], axis=0)
         ps_local = np.argmax(ps)
+        if ps[ps_local] == 0:
+            continue
         worker = np.sum(local_solution[i], axis=1)
         if np.count_nonzero(worker) == 1:
             inc_benefit[np.argmax(worker)][i] += 1
@@ -49,7 +52,8 @@ def benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker):
                     inc_benefit[j][i] += local_solution[i][j][ps_local] * d_per_worker[i]
         else:
             for j in range(0, rack_num):
-                inc_benefit[j][i] += (local_solution[i][j][ps_local] - 1) * d_per_worker[i]
+                if local_solution[i][j][ps_local] > 0:
+                    inc_benefit[j][i] += (local_solution[i][j][ps_local] - 1) * d_per_worker[i]
     return inc_benefit
 
 
@@ -397,8 +401,8 @@ def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worke
     for i in range(0, rack_num):
         for j in range(0, rack_num):
             if i > j:
-                new_oxc_topo[i][j] = b_inter[i][j] / b_oxc_port[i]
-                new_oxc_topo[j][i] = b_inter[j][i] / b_oxc_port[i]
+                new_oxc_topo[i][j] = np.ceil(b_inter[i][j] / b_oxc_port[i])
+                new_oxc_topo[j][i] = np.ceil(b_inter[j][i] / b_oxc_port[i])
     add_oxc_topo = new_oxc_topo - oxc_topo
     for i in range(0, rack_num):
         for j in range(0, rack_num):
@@ -448,8 +452,10 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
     b_per_worker = []
     job_wait = []
     oxc_topo = np.zeros([rack_num, rack_num])
+    pend_job = []
     while 1:
         if ts_count == 0:
+            # 首个时隙信息更新
             end += [0 for i in range(0, init_num)]
             begin += [0 for i in range(0, init_num)]
             job_list += [i for i in range(0, init_num)]
@@ -508,12 +514,12 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         if sum(end) == len(job_arrive_time):
             return np.max(t_job), recon_count
 
+        new_job += pend_job
         # 消除旧业务占用+放置新业务
         reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage,
                                                inc_reserve)
-        for i in new_end:
-            end[i] = 1
-        local_solution, reserve_server = job_deploy(local_solution, reserve_server, new_job, job_worker_num)
+
+        local_solution, reserve_server, pend_job = job_deploy(local_solution, reserve_server, new_job, job_worker_num)
         # 分inc资源
         if algo == 1:
             inc_benefit = benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker)
@@ -542,6 +548,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         b_per_worker, begin, b_inter_allocate = bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage,
                                                                    rack_num, b_tor, b_oxc_port, port_per_rack, b_unit,
                                                                    b_per_worker, begin)
+        job_wait = [ele for ele in job_wait if begin[ele] == 0]
 
         # 判断重配带宽
         b_recon, oxc_topo = recon(oxc_topo, b_inter_allocate, rack_num, b_oxc_port, b_per_worker_old, b_per_worker, inc_usage,
@@ -556,7 +563,7 @@ arrive_time = []
 worker_num = []
 agg_time = []
 d_worker = []
-rack_number = 32
+rack_number = 4
 port_num = 12
 b_tor = [240 for i1 in range(0, rack_number)]
 b_oxc_port = [40 for i2 in range(0, rack_number)]
@@ -589,9 +596,9 @@ with open("Datasize.txt", 'r') as file:
         d_worker.append(num)
 
 t1, r1 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 1, 1, 1, b_tor,
-                b_oxc_port, port_num, 1, 0.1)
+                  b_oxc_port, port_num, 1, 0.1)
 print(t1, r1)
 
 t2, r2 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 0, 1, 1, b_tor,
-                b_oxc_port, port_num, 1, 0.1)
+                  b_oxc_port, port_num, 1, 0.1)
 print(t2, r2)
