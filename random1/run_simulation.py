@@ -6,7 +6,7 @@ import new_algorithm
 rack_num = [64,32,16,8]  # 机架数目
 server_per_rack = 64 #每机架server数目
 init_num = 500 #初始业务数目,越大算法性能越好
-ts_len = [20,15,10,5,1]  # 时间片
+ts_len = [20,15,10,5]  # 时间片
 inc_limit = [20, 15, 10, 5] #inc资源上限
 b_tor = [240 for i1 in range(0, 64)] #每rack交换机带宽容量，B=480 or 240?
 b_oxc_port = [40 for i2 in range(0, 64)] #每port带宽
@@ -81,13 +81,7 @@ def schedule_all (t, k, n, c,init_num):
 
 # 默认场景：
 #t:时隙长数组索引;k：机架数数组索引; n：业务数数组索引; r：lambda数组索引; c：INC数组索引
-schedule_all(3, 0, -1, 2,init_num) #5,64,1400,,inc=10
-
-# # 时隙长 #跳过默认时隙
-# for t1 in range(0, len(ts_len)):
-#     if ts_len[t1] == 5:
-#         continue
-#     schedule_all(t1, 0, 0, 2, 100)#t1,64,800,inc=10
+schedule_all(3, 0, -1, 2, init_num) #5,64,1400,,inc=10
 
 # 业务数 
 for n1 in range(0, len(num_job)):
@@ -95,15 +89,21 @@ for n1 in range(0, len(num_job)):
         continue
     schedule_all(3, 0, n1, 2, init_num)#5,64,n1,inc=10
 
-
-# # INC
-# for c1 in range(0, len(inc_limit)):
-#     if inc_limit[c1] == 10:
-#         continue
-#     schedule_all(3, 0, -1, c1, init_num)#5,64,1400,c1
+# INC
+for c1 in range(0, len(inc_limit)):
+    if inc_limit[c1] == 10:
+        continue
+    schedule_all(3, 0, -1, c1, init_num)#5,64,1400,c1
     
-# # 机架数
-# for k1 in range(0, len(rack_num)):
-#     if rack_num[k1] == 64:
-#         continue
-#     schedule_all(3, k1, -1, 2, init_num)#5, k1, 1400, inc=10
+# 机架数
+for k1 in range(0, len(rack_num)):
+    if rack_num[k1] == 64:
+        continue
+    schedule_all(3, k1, -1, 2, init_num)#5, k1, 1400, 10
+
+# 时隙长 #跳过默认时隙
+for t1 in range(0, len(ts_len)):
+    if ts_len[t1] == 5:
+        continue
+    schedule_all(t1, 0, -1, 2, init_num)#t1,64,800,inc=10
+

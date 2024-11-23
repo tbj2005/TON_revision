@@ -77,8 +77,11 @@ def inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait, rack_num, inc_usag
     return inc_usage, inc_reserve, inc_benefit, inc_job
 
 
-def data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution):
-    for i in new_job:
+def data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution, begin):
+    for i in range(0, len(d_matrix)):
+        if begin[i] == 1:
+            continue
+        d_matrix[i] = np.zeros([rack_num, rack_num])
         ps = np.sum(local_solution[i], 0)
         ps_local = np.argmax(ps)
         worker = np.sum(local_solution[i], 1)
@@ -388,7 +391,7 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
                         flag = 1
                     else:
                         break
-                if flag == 0:
+                if flag == 0 and begin[job_index] == 0:
                     break
 
     return b_per_worker, begin, b_inter_bi
@@ -421,13 +424,18 @@ def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solu
         if b_per_worker[i] > 0:
             ps = np.sum(local_solution[i], axis=0)
             ps_local = np.argmax(ps)
+            worker = np.sum(local_solution[i], axis=1)
+            if np.count_nonzero(worker) == 1:
+                all_in = 1
+            else:
+                all_in = 0
             for u in range(0, rack_num):
                 for v in range(0, rack_num):
                     if d_matrix[i][u][v] > 0:
                         if u != v:
                             data_tran = min(b_per_worker[i] * (local_solution[i][u][v] * (1 - inc_usage[u][i]) +
-                                            inc_usage[u][i]) * ts_len - local_solution[i][u][v] * recon_bandwidth[i] *
-                                            t_recon, d_matrix[i][u][v])
+                                            inc_usage[u][i] * (1 - all_in)) * ts_len - local_solution[i][u][v] *
+                                            recon_bandwidth[i] * t_recon, d_matrix[i][u][v])
                         else:
                             data_tran = min(b_per_worker[i] * local_solution[i][u][ps_local], d_matrix[i][u][v])
                         d_matrix[i][u][v] -= data_tran
@@ -437,20 +445,35 @@ def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solu
 def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_num, job_agg, d_per_worker, algo, ts_len,
              inc_limit, b_tor, b_oxc_port, port_per_rack, b_unit, t_recon):
     job_list = []
+    # 当前已到达业务
     ts_count = 0
+    # 时隙索引
     recon_count = 0
+    # 重构计算
     t_job = np.zeros(len(job_arrive_time))
+    # 存储各业务完成时刻
     local_solution = []
+    # list，各元素为np数组，存储worker放置方案，第i行第j列的元素表示这个业务在第i个机架上有多少worker对应第j个机架的ps，仅有一列元素可能大于0
     reserve_server = np.array([server_per_rack for i in range(0, rack_num)])
+    # 存储各机架剩余可用worker数目
     inc_usage = np.zeros([rack_num, len(job_worker_num)])
+    # inc使用矩阵
     inc_reserve = np.array([inc_limit for i in range(0, rack_num)])
+    # inc资源剩余矩阵
     inc_benefit = -1 * np.ones([rack_num, len(job_worker_num)])
+    # inc收益矩阵，初始化所有元素为-1
     inc_job = []
+    # 存储布尔值，各业务是否会使用inc
     end = []
+    # 存储布尔值，判断业务是否完成传输
     begin = []
+    # 判断业务是否开始传输
     d_matrix = []
+    # 数据矩阵，按MILP中的表达方式
     b_per_worker = []
+    # 各worker分配的带宽量
     job_wait = []
+    # 等待开始的业务
     oxc_topo = np.zeros([rack_num, rack_num])
     pend_job = []
     while 1:
@@ -466,11 +489,13 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
             d_matrix += [np.zeros([rack_num, rack_num]) for i in range(0, init_num)]
             b_per_worker += [0 for i in range(0, init_num)]
         else:
+            # 后续时隙的新业务放入new_job
             new_job = []
             count_job = len(job_list)
             if count_job < len(job_arrive_time):
                 if init_num != 0:
                     while job_arrive_time[count_job] <= ts_count * ts_len + job_arrive_time[init_num - 1]:
+                        # 按业务到达时间与init业务最后到达时间之差确定业务位于哪个时隙
                         new_job.append(count_job)
                         job_list.append(count_job)
                         job_wait.append(count_job)
@@ -482,6 +507,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
                         begin.append(0)
                         count_job += 1
                         if count_job == len(job_arrive_time):
+                            # 业务数到达上限后不再更新信息
                             break
                 else:
                     while job_arrive_time[count_job] <= ts_count * ts_len:
@@ -504,16 +530,19 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         for i in range(0, len(begin)):
             if begin[i] == 1 and np.sum(d_matrix[i]) == 0:
                 if end[i] == 0:
+                    # 找到所有上个时隙完成的业务，更新时间
                     if sum(inc_usage[u][i] for u in range(0, rack_num)) == 1 and np.count_nonzero(local_solution[i]) == 1:
+                        # 用inc且worker不跨机架，不用考虑聚合时间
                         t_job[i] = ts_count * ts_len
                     else:
-                        t_job[i] += job_agg[i] + ts_count * ts_len #agg_time[i] to job_agg[i]
+                        t_job[i] += job_agg[i] + ts_count * ts_len
                     new_end.append(i)
                     end[i] = 1
 
         if sum(end) == len(job_arrive_time):
+            # 业务全部结束，输出时间和重构次数
             return np.max(t_job), recon_count
-
+        # 把上个时隙没放下去的业务放进new_job
         new_job += pend_job
         # 消除旧业务占用+放置新业务
         reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage,
@@ -523,10 +552,13 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         # 分inc资源
         if algo == 1:
             inc_benefit = benefit_cal(new_job, local_solution, inc_benefit, rack_num, d_per_worker)
+            # 计算inc收益矩阵
             inc_usage, inc_reserve, inc_benefit, inc_job = inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait,
                                                                         rack_num, inc_usage)
+            # 使用带权二分匹配求inc分配方式
         if algo == 0:
             for i in job_list:
+                # 按序遍历未开始业务，确定是否使用inc，如果资源不够立刻退出
                 if begin[i] == 0:
                     worker = np.sum(local_solution[i], axis=1)
                     for j in range(0, len(worker)):
@@ -540,7 +572,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
                         inc_reserve[inc_index] -= 1
 
         # 获取新数据矩阵
-        d_matrix = data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution)
+        d_matrix = data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution, begin)
 
         b_per_worker_old = copy.deepcopy(b_per_worker)
 
@@ -548,6 +580,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         b_per_worker, begin, b_inter_allocate = bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage,
                                                                    rack_num, b_tor, b_oxc_port, port_per_rack, b_unit,
                                                                    b_per_worker, begin)
+        # 更新等待业务，即到达后未开始的业务
         job_wait = [ele for ele in job_wait if begin[ele] == 0]
 
         # 判断重配带宽
@@ -556,8 +589,8 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         if sum(b_recon) > 0:
             recon_count += 1
         # 更新剩余数据量
-        d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
+        d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
 # arrive_time = []
 # worker_num = []

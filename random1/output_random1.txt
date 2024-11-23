@@ -1,1 +1,11 @@
 number of job= 140 ; number of rack= 64 ; length of Ts= 5 ; INC= 10
+number of job= 140 ; number of rack= 4 ; length of Ts= 1 ; INC= 5
+noINC-FCFS: 1078.6 39
+noINC-Algo: 658.2 8
+INC-FCFS: 736.6 26
+INC-Algo: 556.6 9
+number of job= 120 ; number of rack= 4 ; length of Ts= 1 ; INC= 5
+noINC-FCFS: 890.6 36
+noINC-Algo: 578.2 12
+INC-FCFS: 700.2 34
+INC-Algo: 477.2 12
