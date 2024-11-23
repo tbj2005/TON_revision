@@ -77,8 +77,11 @@ def inc_allocate(inc_reserve, inc_benefit, inc_job, job_wait, rack_num, inc_usag
     return inc_usage, inc_reserve, inc_benefit, inc_job
 
 
-def data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution):
-    for i in new_job:
+def data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution, begin):
+    for i in range(0, len(d_matrix)):
+        if begin[i] == 1:
+            continue
+        d_matrix[i] = np.zeros([rack_num, rack_num])
         ps = np.sum(local_solution[i], 0)
         ps_local = np.argmax(ps)
         worker = np.sum(local_solution[i], 1)
@@ -388,7 +391,7 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
                         flag = 1
                     else:
                         break
-                if flag == 0:
+                if flag == 0 and begin[job_index] == 0:
                     break
 
     return b_per_worker, begin, b_inter_bi
@@ -421,13 +424,18 @@ def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solu
         if b_per_worker[i] > 0:
             ps = np.sum(local_solution[i], axis=0)
             ps_local = np.argmax(ps)
+            worker = np.sum(local_solution[i], axis=1)
+            if np.count_nonzero(worker) == 1:
+                all_in = 1
+            else:
+                all_in = 0
             for u in range(0, rack_num):
                 for v in range(0, rack_num):
                     if d_matrix[i][u][v] > 0:
                         if u != v:
                             data_tran = min(b_per_worker[i] * (local_solution[i][u][v] * (1 - inc_usage[u][i]) +
-                                            inc_usage[u][i]) * ts_len - local_solution[i][u][v] * recon_bandwidth[i] *
-                                            t_recon, d_matrix[i][u][v])
+                                            inc_usage[u][i] * (1 - all_in)) * ts_len - local_solution[i][u][v] *
+                                            recon_bandwidth[i] * t_recon, d_matrix[i][u][v])
                         else:
                             data_tran = min(b_per_worker[i] * local_solution[i][u][ps_local], d_matrix[i][u][v])
                         d_matrix[i][u][v] -= data_tran
@@ -527,7 +535,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
                         # 用inc且worker不跨机架，不用考虑聚合时间
                         t_job[i] = ts_count * ts_len
                     else:
-                        t_job[i] += agg_time[i] + ts_count * ts_len
+                        t_job[i] += job_agg[i] + ts_count * ts_len
                     new_end.append(i)
                     end[i] = 1
 
@@ -539,7 +547,6 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         # 消除旧业务占用+放置新业务
         reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage,
                                                inc_reserve)
-        print(1)
 
         local_solution, reserve_server, pend_job = job_deploy(local_solution, reserve_server, new_job, job_worker_num)
         # 分inc资源
@@ -565,7 +572,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
                         inc_reserve[inc_index] -= 1
 
         # 获取新数据矩阵
-        d_matrix = data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution)
+        d_matrix = data_obtain(inc_usage, rack_num, d_per_worker, d_matrix, new_job, local_solution, begin)
 
         b_per_worker_old = copy.deepcopy(b_per_worker)
 
@@ -582,6 +589,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         if sum(b_recon) > 0:
             recon_count += 1
         # 更新剩余数据量
+
         d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
 
@@ -589,7 +597,7 @@ arrive_time = []
 worker_num = []
 agg_time = []
 d_worker = []
-rack_number = 4
+rack_number = 8
 port_num = 12
 b_tor = [240 for i1 in range(0, rack_number)]
 b_oxc_port = [40 for i2 in range(0, rack_number)]
@@ -621,10 +629,17 @@ with open("Datasize.txt", 'r') as file:
         num = float(columns[0])
         d_worker.append(num)
 
-t1, r1 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 1, 10, 1, b_tor,
+t1, r1 = schedule(rack_number, 64, 100, arrive_time[:100], worker_num[:100], agg_time[:100], d_worker[:100], 1, 1, 2, b_tor,
                   b_oxc_port, port_num, 1, 0.1)
 print(t1, r1)
 
-# t2, r2 = schedule(rack_number, 64, 50, arrive_time[:50], worker_num[:50], agg_time[:50], d_worker[:50], 0, 1, 1, b_tor,
-#                   b_oxc_port, port_num, 1, 0.1)
-# print(t2, r2)
+t2, r2 = schedule(rack_number, 64, 100, arrive_time[:100], worker_num[:100], agg_time[:100], d_worker[:100], 0, 1, 2, b_tor,
+                  b_oxc_port, port_num, 1, 0.1)
+print(t2, r2)
+t1, r1 = schedule(rack_number, 64, 100, arrive_time[:100], worker_num[:100], agg_time[:100], d_worker[:100], 1, 1, 0, b_tor,
+                  b_oxc_port, port_num, 1, 0.1)
+print(t1, r1)
+
+t2, r2 = schedule(rack_number, 64, 100, arrive_time[:100], worker_num[:100], agg_time[:100], d_worker[:100], 0, 1, 0, b_tor,
+                  b_oxc_port, port_num, 1, 0.1)
+print(t2, r2)
