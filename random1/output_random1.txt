@@ -1,0 +1,1 @@
+number of job= 140 ; number of rack= 64 ; length of Ts= 5 ; INC= 10
