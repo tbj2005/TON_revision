@@ -11,6 +11,7 @@ model.update()
 
 
 def job_deploy(reserve_server, job_num, job_worker_num, rack_num):
+    pending_jobs=[]
     local_solution = [np.zeros([rack_num, rack_num]) for i in range(0, job_num)]
     for i in range(0, job_num):
         if job_worker_num[i] + 1 <= np.sum(reserve_server):
@@ -24,8 +25,8 @@ def job_deploy(reserve_server, job_num, job_worker_num, rack_num):
                 local_solution[i][index][ps_local] += worker_index
                 reserve_server[index] -= worker_index
         else:
-            return -1, -1
-    return local_solution, reserve_server
+            pending_jobs.append(i)
+    return local_solution, reserve_server, pending_jobs
 
 
 def cal_i(ts):
@@ -278,20 +279,20 @@ with open("PS_time.txt", "r") as file:
         PS = float(columns[0])
         PS_time.append(PS)
 
-job_number = 30
-rack_number = 4
-oxc_per_rack = 6
+job_number = 60
+rack_number = 8
+oxc_per_rack = 12
 ts_number = 100
 ts_length = 1
-inc_lim = [1 for i in range(0, rack_number)]
+inc_lim = [5 for i in range(0, rack_number)]
 b_in_rack = [240 for i in range(0, rack_number)]
 # b_out_rack = [40 * 6 for i in range(0, rack_number)]
-oxc_port = [6 for i in range(0, rack_number)]
+oxc_port = [12 for i in range(0, rack_number)]
 worker_job = np.array(worker_job[0:job_number])
 Data_job = np.array(Data_job[0:job_number])
 PS_time = np.array(PS_time[0:job_number])
-w_t, _ = job_deploy([64 for i in range(0, rack_number)], job_number, worker_job, rack_number)
-print(w_t)
+w_t, _,p_job = job_deploy([64 for i in range(0, rack_number)], job_number, worker_job, rack_number)
+print(p_job)
 
 t_x, r = ilp(job_number, ts_number, ts_length, rack_number, PS_time, inc_lim, w_t, b_in_rack, Data_job, 40, oxc_port, 0.2, 1)
 print(t_x, r)

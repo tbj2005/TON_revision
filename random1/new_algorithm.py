@@ -407,14 +407,16 @@ def recon(oxc_topo, b_inter, rack_num, b_oxc_port, b_per_worker_old, b_per_worke
                 new_oxc_topo[i][j] = np.ceil(b_inter[i][j] / b_oxc_port[i])
                 new_oxc_topo[j][i] = np.ceil(b_inter[j][i] / b_oxc_port[i])
     add_oxc_topo = new_oxc_topo - oxc_topo
-    for i in range(0, rack_num):
-        for j in range(0, rack_num):
-            for k in range(0, len(b_per_worker)):
-                if add_oxc_topo[i][j] > 0 and begin[k] == 1 and end[k] == 0 and local_solution[k][i][j] > 0:
-                    if np.count_nonzero(local_solution[k]) > 1:
-                        recon_bandwidth[k] = max(b_per_worker[k] - b_per_worker_old[k], 0)
-                    elif inc_usage[i][k] == 0:
-                        recon_bandwidth[k] = max(b_per_worker[k] - b_per_worker_old[k], 0)
+    add_row, add_col = np.nonzero(add_oxc_topo)
+    for u in range(0, len(add_row)):
+        i = add_row[u]
+        j = add_col[u]
+        for k in range(0, len(b_per_worker)):
+            if add_oxc_topo[i][j] > 0 and begin[k] == 1 and end[k] == 0 and local_solution[k][i][j] > 0:
+                if np.count_nonzero(local_solution[k]) > 1:
+                    recon_bandwidth[k] = max(b_per_worker[k] - b_per_worker_old[k], 0)
+                elif inc_usage[i][k] == 0:
+                    recon_bandwidth[k] = max(b_per_worker[k] - b_per_worker_old[k], 0)
     oxc_topo = copy.deepcopy(new_oxc_topo)
     return recon_bandwidth, oxc_topo
 
@@ -596,9 +598,12 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
 # worker_num = []
 # agg_time = []
 # d_worker = []
-# rack_number = 4
-# port_num = 12
-# b_tor = [240 for i1 in range(0, rack_number)]
+# t_len = 1
+# inc = 10
+# b_unit = 10
+# rack_number = 64
+# port_num = 64
+# b_tor = [2560 for i1 in range(0, rack_number)]
 # b_oxc_port = [40 for i2 in range(0, rack_number)]
 # with open("simulate_time.txt", 'r') as file:
 #     for line in file:
@@ -628,25 +633,25 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
 #         num = float(columns[0])
 #         d_worker.append(num)
 
+# start_time1=time.time()
+# t1, r1 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, t_len, 0, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2)
+# print("noINC-FCFS:",t1, r1,time.time()-start_time1)
 
-# t1, r1 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 0, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
-# print("noINC-FCFS:",t1, r1)
-
-# t2, r2 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 1, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
-# print("noINC-Algo:",t2, r2)
 
 # start_time1=time.time()
-# t3, r3 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 0, 1, 1, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
-# print("INC-FCFS:",t3, r3)
-# end_time1=time.time()
-# print("span_time:",end_time1-start_time1)
+# t2, r2 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, t_len, 0, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2)
+# print("noINC-Algo:",t2, r2,time.time()-start_time1)
+
+
+# start_time1=time.time()
+# t3, r3 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, t_len, inc, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2)
+# print("INC-FCFS:",t3, r3,time.time()-start_time1)
+
 
 # start_time2=time.time()
-# t4, r4 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 1, 1, 1, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
-# print("INC-Algo:",t4, r4)
-# end_time2=time.time()
-# print("span_time:",end_time2-start_time2)
+# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, t_len, inc, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2)
+# print("INC-Algo:",t4, r4,time.time()-start_time2)
