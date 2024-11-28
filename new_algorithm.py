@@ -597,6 +597,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         if sum(b_recon) > 0:
             recon_count += 1
         # 更新剩余数据量
+        print(ts_count, sum(end))
 
         d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
@@ -605,9 +606,9 @@ arrive_time = []
 worker_num = []
 agg_time = []
 d_worker = []
-rack_number = 64
-port_num = 63
-b_tor = [2520 for i1 in range(0, rack_number)]
+rack_number = 31
+port_num = 30
+b_tor = [1200 for i1 in range(0, rack_number)]
 b_oxc_port = [40 for i2 in range(0, rack_number)]
 with open("simulate_time.txt", 'r') as file:
     for line in file:
@@ -653,16 +654,23 @@ with open("Datasize.txt", 'r') as file:
 # end_time1=time.time()
 # print("span_time:",end_time1-start_time1)
 #
-# start_time2=time.time()
-# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
-#                 b_oxc_port, port_num, 10, 0.2, 1)
-# print("INC-Algo:",t4, r4)
-# end_time2=time.time()
-# print("span_time:",end_time2-start_time2)
-
 start_time2=time.time()
-t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
+t4, r4 = schedule(rack_number, 64, 1000, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 5, b_tor,
                 b_oxc_port, port_num, 1, 0.2, 0)
 print("INC-Algo:",t4, r4)
 end_time2=time.time()
 print("span_time:",end_time2-start_time2)
+
+start_time2=time.time()
+t4, r4 = schedule(rack_number, 64, 800, arrive_time[:800], worker_num[:800], agg_time[:800], d_worker[:800], 1, 1, 5, b_tor,
+                b_oxc_port, port_num, 1, 0.2, 0)
+print("INC-Algo:",t4, r4)
+end_time2=time.time()
+print("span_time:",end_time2-start_time2)
+
+# start_time2=time.time()
+# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
+#                 b_oxc_port, port_num, 1, 0.2, 0)
+# print("INC-Algo:",t4, r4)
+# end_time2=time.time()
+# print("span_time:",end_time2-start_time2)
