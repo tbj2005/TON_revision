@@ -207,7 +207,7 @@ def pct_count(inc_usage, d_matrix, rack_num, local_solution, job_agg, b_tor, b_o
 
 
 def feasible_add(b_per_worker, relate, local_solution, b_tor_bi, b_inter_bi, rack_num, inc_usage, b_tor,
-                 b_oxc_port, port_per_rack, agg_time, b_unit, d_matrix):
+                 b_oxc_port, port_per_rack, agg_time, b_unit, d_matrix, x_recon):
     t_add = []
     for job_index in relate:
         if np.sum(d_matrix[job_index]) == 0:
@@ -243,7 +243,9 @@ def feasible_add(b_per_worker, relate, local_solution, b_tor_bi, b_inter_bi, rac
         p_inter_up = np.sum(p_inter_test, axis=1)
         if min(in_resource) < 0:
             t_add.append(-1)
-        elif max(p_inter_up) > port_per_rack:
+        elif max(p_inter_up) > port_per_rack and x_recon == 1:
+            t_add.append(-1)
+        elif np.max(p_inter_test) > 1 and x_recon == 0:
             t_add.append(-1)
         else:
             t_matrix = np.zeros([rack_num, rack_num])
@@ -264,7 +266,7 @@ def feasible_add(b_per_worker, relate, local_solution, b_tor_bi, b_inter_bi, rac
 
 
 def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_num, b_tor, b_oxc_port, port_per_rack,
-                       b_unit, b_per_worker, begin):
+                       b_unit, b_per_worker, begin, x_recon):
     b_tor_up = np.zeros(rack_num)
     b_tor_down = np.zeros(rack_num)
     b_inter = np.zeros([rack_num, rack_num])
@@ -313,7 +315,7 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
             while 1:
                 t_add = feasible_add(b_per_worker, relate_j, local_solution, b_tor_bi, b_inter_bi,
                                      rack_num, inc_usage, b_tor, b_oxc_port, port_per_rack, agg_t, b_unit,
-                                     d_matrix)
+                                     d_matrix, x_recon)
                 if len(t_add) == 0:
                     break
                 max_index = np.argmax(t_add)
@@ -445,7 +447,7 @@ def communication(d_matrix, inc_usage, b_per_worker, recon_bandwidth, local_solu
 
 
 def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_num, job_agg, d_per_worker, algo, ts_len,
-             inc_limit, b_tor, b_oxc_port, port_per_rack, b_unit, t_recon):
+             inc_limit, b_tor, b_oxc_port, port_per_rack, b_unit, t_recon, x_recon):
     job_list = []
     # 当前已到达业务
     ts_count = 0
@@ -581,74 +583,86 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
         # 分带宽
         b_per_worker, begin, b_inter_allocate = bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage,
                                                                    rack_num, b_tor, b_oxc_port, port_per_rack, b_unit,
-                                                                   b_per_worker, begin)
+                                                                   b_per_worker, begin, x_recon)
         # 更新等待业务，即到达后未开始的业务
         job_wait = [ele for ele in job_wait if begin[ele] == 0]
 
         # 判断重配带宽
-        b_recon, oxc_topo = recon(oxc_topo, b_inter_allocate, rack_num, b_oxc_port, b_per_worker_old, b_per_worker, inc_usage,
-                                  local_solution, begin, end)
+        if x_recon == 1:
+            b_recon, oxc_topo = recon(oxc_topo, b_inter_allocate, rack_num, b_oxc_port, b_per_worker_old, b_per_worker,
+                                      inc_usage, local_solution, begin, end)
+        else:
+            b_recon = np.zeros(len(end))
+            oxc_topo = np.ones([rack_num, rack_num])
         if sum(b_recon) > 0:
             recon_count += 1
         # 更新剩余数据量
 
         d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
-# arrive_time = []
-# worker_num = []
-# agg_time = []
-# d_worker = []
-# rack_number = 4
-# port_num = 12
-# b_tor = [240 for i1 in range(0, rack_number)]
-# b_oxc_port = [40 for i2 in range(0, rack_number)]
-# with open("simulate_time.txt", 'r') as file:
-#     for line in file:
-#         # 去除行尾的换行符，并以逗号分割行数据
-#         columns = line.strip().split(",")
-#         time_job = float(columns[0])
-#         arrive_time.append(time_job)
-#
-# with open("simulate_worker.txt", 'r') as file:
-#     for line in file:
-#         # 去除行尾的换行符，并以逗号分割行数据
-#         columns = line.strip().split(",")
-#         num = int(columns[0])
-#         worker_num.append(num)
-#
-# with open("PS_time.txt", 'r') as file:
-#     for line in file:
-#         # 去除行尾的换行符，并以逗号分割行数据
-#         columns = line.strip().split(",")
-#         num = float(columns[0])
-#         agg_time.append(num)
-#
-# with open("Datasize.txt", 'r') as file:
-#     for line in file:
-#         # 去除行尾的换行符，并以逗号分割行数据
-#         columns = line.strip().split(",")
-#         num = float(columns[0])
-#         d_worker.append(num)
+
+arrive_time = []
+worker_num = []
+agg_time = []
+d_worker = []
+rack_number = 64
+port_num = 63
+b_tor = [2520 for i1 in range(0, rack_number)]
+b_oxc_port = [40 for i2 in range(0, rack_number)]
+with open("simulate_time.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        time_job = float(columns[0])
+        arrive_time.append(time_job)
+
+with open("simulate_worker.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        num = int(columns[0])
+        worker_num.append(num)
+
+with open("PS_time.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        num = float(columns[0])
+        agg_time.append(num)
+
+with open("Datasize.txt", 'r') as file:
+    for line in file:
+        # 去除行尾的换行符，并以逗号分割行数据
+        columns = line.strip().split(",")
+        num = float(columns[0])
+        d_worker.append(num)
 
 
-# t1, r1 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 0, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
+# t1, r1 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, 1, 0, b_tor,
+#                 b_oxc_port, port_num, 5, 0.2)
 # print("noINC-FCFS:",t1, r1)
-
-# t2, r2 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 1, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
+#
+# t2, r2 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 0, b_tor,
+#                 b_oxc_port, port_num, 10, 0.2)
 # print("noINC-Algo:",t2, r2)
-
+#
 # start_time1=time.time()
-# t3, r3 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 0, 1, 1, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
+# t3, r3 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, 1, 10, b_tor,
+#                 b_oxc_port, port_num, 10, 0.2)
 # print("INC-FCFS:",t3, r3)
 # end_time1=time.time()
 # print("span_time:",end_time1-start_time1)
-
+#
 # start_time2=time.time()
-# t4, r4 = schedule(rack_number, 64, 150, arrive_time[:150], worker_num[:150], agg_time[:150], d_worker[:150], 1, 1, 1, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2)
+# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
+#                 b_oxc_port, port_num, 10, 0.2, 1)
 # print("INC-Algo:",t4, r4)
 # end_time2=time.time()
 # print("span_time:",end_time2-start_time2)
+
+start_time2=time.time()
+t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
+                b_oxc_port, port_num, 1, 0.2, 0)
+print("INC-Algo:",t4, r4)
+end_time2=time.time()
+print("span_time:",end_time2-start_time2)
