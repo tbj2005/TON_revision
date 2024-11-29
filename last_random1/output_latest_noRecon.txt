@@ -1,0 +1,56 @@
+length of Ts=1; number of rack=8; number of job=40; INC=4
+INC-FCFS-Recon: 16.0, 0
+time_span: 0.3510589599609375
+INC-Algo-NoRecon: 136.2, 0
+time_span:0.5878124237060547
+INC-Algo-Recon: 136.2, 2
+time_span:0.682805061340332
+length of Ts=1; number of rack=8; number of job=50; INC=4
+INC-FCFS-Recon: 20.0, 0
+time_span: 0.4456188678741455
+INC-Algo-NoRecon: 142.2, 0
+time_span:0.8099930286407471
+INC-Algo-Recon: 142.2, 2
+time_span:1.031620979309082
+length of Ts=1; number of rack=8; number of job=60; INC=4
+INC-FCFS-Recon: 149.2, 2
+time_span: 0.5230937004089355
+INC-Algo-NoRecon: 201.2, 0
+time_span:1.1976990699768066
+INC-Algo-Recon: 146.2, 9
+time_span:1.492560625076294
+length of Ts=1; number of rack=8; number of job=70; INC=4
+INC-FCFS-Recon: 166.2, 6
+time_span: 0.6016254425048828
+INC-Algo-NoRecon: 201.2, 0
+time_span:1.3656957149505615
+INC-Algo-Recon: 158.2, 13
+time_span:1.5086445808410645
+length of Ts=1; number of rack=8; number of job=80; INC=4
+INC-FCFS-Recon: 169.2, 10
+time_span: 0.6570301055908203
+INC-Algo-NoRecon: 232.2, 0
+time_span:1.6497297286987305
+INC-Algo-Recon: 159.2, 20
+time_span:1.659902811050415
+length of Ts=1; number of rack=8; number of job=90; INC=4
+INC-FCFS-Recon: 171.2, 16
+time_span: 0.7418577671051025
+INC-Algo-NoRecon: 201.2, 0
+time_span:1.7744972705841064
+INC-Algo-Recon: 162.2, 15
+time_span:1.7676677703857422
+length of Ts=1; number of rack=8; number of job=100; INC=4
+INC-FCFS-Recon: 171.2, 20
+time_span: 0.854604959487915
+INC-Algo-NoRecon: 201.2, 0
+time_span:1.9209353923797607
+INC-Algo-Recon: 161.2, 18
+time_span:2.06347393989563
+length of Ts=1; number of rack=8; number of job=200; INC=4
+INC-FCFS-Recon: 299.6, 62
+time_span: 2.257981538772583
+INC-Algo-NoRecon: 289.6, 0
+time_span:5.806270599365234
+INC-Algo-Recon: 210.6, 35
+time_span:4.696197748184204

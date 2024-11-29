@@ -1,0 +1,10 @@
+length of Ts=1; number of rack=64; number of job=1000; INC=4
+length of Ts=1; number of rack=64; number of job=1400; INC=4
+INC-Algo: 313.6, 0
+INC-Algo: 171.6, 35
+length of Ts=1; number of rack=64; number of job=1200; INC=4
+INC-Algo: 313.6, 0
+INC-Algo: 166.6, 29
+length of Ts=1; number of rack=64; number of job=800; INC=4
+INC-Algo: 313.6, 0
+INC-Algo: 159.6, 22
