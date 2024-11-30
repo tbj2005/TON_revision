@@ -19,7 +19,11 @@ def job_exit(rack_num, local_solution, reserve_server, add_end, inc_usage, inc_r
 
 def job_deploy(local_solution, reserve_server, new_job, job_worker_num):
     pending_job = []
+    flag_d = 0
     for i in new_job:
+        if flag_d == 1:
+            pending_job.append(i)
+            continue
         if job_worker_num[i] + 1 <= np.sum(reserve_server):
             ps_local = np.argmax(reserve_server)
             reserve_server[ps_local] -= 1
@@ -31,6 +35,7 @@ def job_deploy(local_solution, reserve_server, new_job, job_worker_num):
                 local_solution[i][index][ps_local] += worker_index
                 reserve_server[index] -= worker_index
         else:
+            flag_d = 1
             pending_job.append(i)
     return local_solution, reserve_server, pending_job
 
@@ -350,6 +355,7 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
 
         return b_per_worker, begin, b_inter_bi
     if algo == 0:
+        flag_x = 0
         for job_index in range(0, len(d_matrix)):
             flag = 0
             if np.sum(d_matrix[job_index]) > 0:
@@ -391,9 +397,11 @@ def bandwidth_allocate(d_matrix, job_agg, local_solution, algo, inc_usage, rack_
                         b_inter_bi = copy.deepcopy(b_inter_bi_test)
                         begin[job_index] = 1
                         flag = 1
+                        flag_x = 1
                     else:
+                        # print(1)
                         break
-                if flag == 0 and begin[job_index] == 0:
+                if begin[job_index] == 0 and np.sum(d_matrix[job_index]) > 0:
                     break
 
     return b_per_worker, begin, b_inter_bi
@@ -547,7 +555,7 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
             # 业务全部结束，输出时间和重构次数
             return np.max(t_job), recon_count
         # 把上个时隙没放下去的业务放进new_job
-        new_job += pend_job
+        new_job = pend_job + new_job
         # 消除旧业务占用+放置新业务
         reserve_server, inc_reserve = job_exit(rack_num, local_solution, reserve_server, new_end, inc_usage,
                                                inc_reserve)
@@ -596,87 +604,70 @@ def schedule(rack_num, server_per_rack, init_num, job_arrive_time, job_worker_nu
             oxc_topo = np.ones([rack_num, rack_num])
         if sum(b_recon) > 0:
             recon_count += 1
-        # 更新剩余数据量
 
         d_matrix = communication(d_matrix, inc_usage, b_per_worker, b_recon, local_solution, rack_num, t_recon, ts_len)
 
 
-arrive_time = []
-worker_num = []
-agg_time = []
-d_worker = []
-rack_number = 8
-port_num = 4
-b_tor = [160 for i1 in range(0, rack_number)]
-b_oxc_port = [40 for i2 in range(0, rack_number)]
-with open("simulate_time.txt", 'r') as file:
-    for line in file:
-        # 去除行尾的换行符，并以逗号分割行数据
-        columns = line.strip().split(",")
-        time_job = float(columns[0])
-        arrive_time.append(time_job)
+# arrive_time = []
+# worker_num = []
+# agg_time = []
+# d_worker = []
+# t_len=1
+# inc=4
+# b_unit=2
+# if_recon=0 #0:均匀拓扑无重构
+# rack_number = 64
+# port_num = 63
+# b_tor = [2520 for i1 in range(0, rack_number)]
+# b_oxc_port = [40 for i2 in range(0, rack_number)]
+# with open("simulate_time.txt", 'r') as file:
+#     for line in file:
+#         # 去除行尾的换行符，并以逗号分割行数据
+#         columns = line.strip().split(",")
+#         time_job = float(columns[0])
+#         arrive_time.append(time_job)
 
-with open("simulate_worker.txt", 'r') as file:
-    for line in file:
-        # 去除行尾的换行符，并以逗号分割行数据
-        columns = line.strip().split(",")
-        num = int(columns[0])
-        worker_num.append(num)
+# with open("simulate_worker.txt", 'r') as file:
+#     for line in file:
+#         # 去除行尾的换行符，并以逗号分割行数据
+#         columns = line.strip().split(",")
+#         num = int(columns[0])
+#         worker_num.append(num)
 
-with open("PS_time.txt", 'r') as file:
-    for line in file:
-        # 去除行尾的换行符，并以逗号分割行数据
-        columns = line.strip().split(",")
-        num = float(columns[0])
-        agg_time.append(num)
+# with open("PS_time.txt", 'r') as file:
+#     for line in file:
+#         # 去除行尾的换行符，并以逗号分割行数据
+#         columns = line.strip().split(",")
+#         num = float(columns[0])
+#         agg_time.append(num)
 
-with open("Datasize.txt", 'r') as file:
-    for line in file:
-        # 去除行尾的换行符，并以逗号分割行数据
-        columns = line.strip().split(",")
-        num = float(columns[0])
-        d_worker.append(num)
+# with open("Datasize.txt", 'r') as file:
+#     for line in file:
+#         # 去除行尾的换行符，并以逗号分割行数据
+#         columns = line.strip().split(",")
+#         num = float(columns[0])
+#         d_worker.append(num)
 
 
-# t1, r1 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 5, 0.2)
-# print("noINC-FCFS:",t1, r1)
-#
-# t2, r2 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 0, b_tor,
-#                 b_oxc_port, port_num, 10, 0.2)
-# print("noINC-Algo:",t2, r2)
-#
+# # t1, r1 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, 1, 0, b_tor,
+# #                 b_oxc_port, port_num, 5, 0.2)
+# # print("noINC-FCFS:",t1, r1)
+# #
+# # t2, r2 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 0, b_tor,
+# #                 b_oxc_port, port_num, 10, 0.2)
+# # print("noINC-Algo:",t2, r2)
+# #
+# #
 # start_time1=time.time()
-# t3, r3 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 0, 1, 10, b_tor,
-#                 b_oxc_port, port_num, 10, 0.2)
-# print("INC-FCFS:",t3, r3)
+# t3, r3 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, t_len, inc, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2, 1)
+# print("INC-Algo-Recon:",t3, r3)
 # end_time1=time.time()
 # print("span_time:",end_time1-start_time1)
-#
-# start_time2=time.time()
-# t4, r4 = schedule(rack_number, 64, 1000, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 5, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2, 0)
-# print("INC-Algo:",t4, r4)
-# end_time2=time.time()
-# print("span_time:",end_time2-start_time2)
-
-start_time2 = time.time()
-t4, r4 = schedule(rack_number, 64, 60, arrive_time[:60], worker_num[:60], agg_time[:60], d_worker[:60], 0, 1, 5, b_tor,
-                  b_oxc_port, port_num, 2, 0.2, 1)
-print("INC-Algo:", t4, r4)
-end_time2 = time.time()
-print("span_time:", end_time2 - start_time2)
-
-start_time2 = time.time()
-t4, r4 = schedule(rack_number, 64, 60, arrive_time[:60], worker_num[:60], agg_time[:60], d_worker[:60], 0, 1, 0, b_tor,
-                  b_oxc_port, port_num, 2, 0.2, 1)
-print("INC-Algo:", t4, r4)
-end_time2 = time.time()
-print("span_time:", end_time2 - start_time2)
 
 # start_time2=time.time()
-# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, 1, 10, b_tor,
-#                 b_oxc_port, port_num, 1, 0.2, 0)
-# print("INC-Algo:",t4, r4)
+# t4, r4 = schedule(rack_number, 64, 500, arrive_time[:1000], worker_num[:1000], agg_time[:1000], d_worker[:1000], 1, t_len, inc, b_tor,
+#                 b_oxc_port, port_num, b_unit, 0.2, 0)
+# print("INC-Algo-NoRecon:",t4, r4)
 # end_time2=time.time()
 # print("span_time:",end_time2-start_time2)
